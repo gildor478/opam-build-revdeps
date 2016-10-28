@@ -1,0 +1,8 @@
+S src/**
+S test/**
+B _build/src/**
+B _build/test/**
+PKG unix
+PKG fileutils
+PKG opam-lib
+FLG -w +a-4-44
