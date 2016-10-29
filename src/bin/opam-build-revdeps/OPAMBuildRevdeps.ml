@@ -85,21 +85,12 @@ let reverse_dependencies t =
         t.universe_depends
         (OpamPackage.Set.singleton nv)
     in
-    let atoms =
-      OpamFormula.atoms (OpamTypesBase.filter_deps (OpamFile.OPAM.depends opam))
-    in
     let uninstallable_deps =
       List.fold_left
         (fun st nv' ->
            let n' = OpamPackage.name nv' in
            if OpamPackage.Set.mem nv' installable then begin
-             let constraints_are_ok =
-               List.exists (fun atom -> OpamFormula.check atom nv) atoms
-             in
-             if constraints_are_ok then
-               OpamPackage.Name.Set.remove n' st
-             else
-               st
+             OpamPackage.Name.Set.remove n' st
            end else begin
              st
            end)

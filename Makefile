@@ -1,3 +1,14 @@
+
+ARGS=
+ARGS+=--dry_run
+ARGS+=--only zipperposition
+ARGS+=--only bistro
+ARGS+=--only bap-warn-used
+
+default: build
+	./OPAMBuildRevdeps.native --package oasis \
+		--exclude bap-std $(ARGS)
+
 # OASIS_START
 # DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
 
