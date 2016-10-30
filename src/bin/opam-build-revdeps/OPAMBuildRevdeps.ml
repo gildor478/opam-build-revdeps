@@ -25,7 +25,7 @@ let rm_r d =
 type t =
   {
     only_packages: SetString.t option;
-    exclude_packages: SetString.t;
+    excluded_packages: SetString.t;
     state: OpamState.Types.t;
     universe_depends: OpamTypes.universe;
     root_package: OpamPackage.t;
@@ -49,7 +49,7 @@ let reverse_dependencies t =
   in
 
   let is_not_excluded_on_cli nv =
-    not (is_included_in t.exclude_packages nv)
+    not (is_included_in t.excluded_packages nv)
   in
 
   let is_not_filtered_on_cli nv =
@@ -252,21 +252,37 @@ let () =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
 
-  let root_package =
-    match package_opt with
-    | `Package p -> p
-    | `Name n ->
-      OpamPackage.max_version universe_depends.OpamTypes.u_installed n
+  let root_package, excluded_packages =
+    let open OpamTypes in
+    let nv, all_versions =
+      match package_opt with
+      | `Package p ->
+        p,
+        OpamPackage.packages_of_name
+          universe_depends.u_packages
+          (OpamPackage.name p)
+      | `Name n ->
+        OpamPackage.max_version universe_depends.u_installed n,
+        OpamPackage.packages_of_name universe_depends.u_packages n
+    in
+    nv,
+    OpamPackage.Set.fold
+      (fun nv st -> SetString.add (OpamPackage.to_string nv) st)
+      (OpamPackage.Set.remove nv all_versions)
+      !exclude
   in
 
   let rev_deps =
     OpamGlobals.note
       "Computing reverse dependencies for package %s"
       (OpamPackage.to_string root_package);
+    OpamGlobals.note
+      "Excluded packages: %s."
+      (String.concat ", " (SetString.elements excluded_packages));
     reverse_dependencies
       {
         only_packages = !only;
-        exclude_packages = !exclude;
+        excluded_packages;
         state;
         universe_depends;
         root_package;
