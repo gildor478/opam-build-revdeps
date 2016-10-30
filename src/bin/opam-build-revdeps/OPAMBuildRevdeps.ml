@@ -59,54 +59,56 @@ let reverse_dependencies t =
     | true, None -> true
   in
 
+  let universe =
+    let u = t.universe_depends in
+    let set_filter = OpamPackage.Set.filter is_not_excluded_on_cli in
+    let map_filter mp =
+      OpamPackage.Map.filter (fun nv _ -> is_not_excluded_on_cli nv) mp
+    in
+    let open OpamTypes in
+    {
+      u_packages = set_filter u.u_packages;
+      u_installed = set_filter u.u_installed;
+      u_available = set_filter u.u_available;
+      u_depends = map_filter u.u_depends;
+      u_depopts = map_filter u.u_depopts;
+      u_conflicts = map_filter u.u_conflicts;
+      u_action = u.u_action;
+      u_installed_roots = set_filter u.u_installed_roots;
+      u_pinned = set_filter u.u_pinned;
+      u_base = set_filter u.u_base;
+    }
+  in
+
   let installable =
     OpamPackage.Set.filter
       (fun nv ->
-         if is_not_excluded_on_cli nv then begin
-           let opam = OpamState.opam t.state nv in
-           OpamFilter.eval_to_bool
-             ~default:false
-             (OpamState.filter_env ~opam t.state)
-             (OpamFile.OPAM.available opam)
-         end else begin
-           false
-         end)
-      (OpamSolver.installable t.universe_depends)
+         let opam = OpamState.opam t.state nv in
+         OpamFilter.eval_to_bool
+           ~default:false
+           (OpamState.filter_env ~opam t.state)
+           (OpamFile.OPAM.available opam))
+      (OpamSolver.installable universe)
   in
 
-  let is_all_depends_installable nv =
-    let deps =
-      OpamSolver.dependencies
-        ~build:true
-        ~depopts:false
-        ~installed:false
-        t.universe_depends
-        (OpamPackage.Set.singleton nv)
+  let is_installable nv =
+    let open OpamTypes in
+    let result =
+      OpamSolver.resolve
+        ~verbose:true
+        universe
+        ~orphans:OpamPackage.Set.empty
+        {
+          wish_install =
+            OpamSolution.atoms_of_packages (OpamPackage.Set.singleton nv);
+          wish_remove = [];
+          wish_upgrade = [];
+          criteria = `Default;
+        }
     in
-    let uninstallable_deps =
-      List.fold_left
-        (fun st nv' ->
-           let n' = OpamPackage.name nv' in
-           if OpamPackage.Set.mem nv' installable then begin
-             OpamPackage.Name.Set.remove n' st
-           end else begin
-             st
-           end)
-        (OpamPackage.names_of_packages (OpamPackage.Set.of_list deps))
-        deps
-    in
-    if OpamPackage.Name.Set.is_empty uninstallable_deps then begin
-      OpamGlobals.note
-        "All dependencies can be installed for package %s."
-        (OpamPackage.to_string nv);
-      true
-    end else begin
-      OpamGlobals.note
-        "Uninstallable dependencies for package %s: %s."
-        (OpamPackage.to_string nv)
-        (OpamPackage.Name.Set.to_string uninstallable_deps);
-      false
-    end
+    match result with
+    | Success _ -> true
+    | Conflicts _ -> false
   in
 
   let is_dependent_on deps opam =
@@ -132,9 +134,20 @@ let reverse_dependencies t =
       (fun nv ->
          if is_not_filtered_on_cli nv then begin
            let opam = OpamState.opam t.state nv in
-           if is_dependent_on pkg_set opam then
-             is_all_depends_installable nv
-           else
+           if is_dependent_on pkg_set opam then begin
+             let nv_str = OpamPackage.to_string nv in
+             let installable =
+               OpamGlobals.note
+                 "Considering installability of package %s"
+                 nv_str;
+               is_installable nv
+             in
+             if installable then
+               OpamGlobals.note "Package %s is  not installable." nv_str
+             else
+               OpamGlobals.note "Package %s will be built." nv_str;
+             installable
+           end else
              false
          end else begin
            false
@@ -288,6 +301,13 @@ let () =
         root_package;
       }
   in
+
+  let has_root_package_installed () =
+    let state = OpamState.load_state "has_root_installed" in
+    let universe_depends = OpamState.universe state OpamTypes.Depends in
+    OpamPackage.Set.mem root_package universe_depends.OpamTypes.u_installed
+  in
+
   let steps = 2 * (List.length rev_deps) in
   let _, lst =
     List.fold_left
@@ -322,6 +342,18 @@ let () =
                `KO
            else
              result
+         in
+         let result =
+           if result = `OK && not (has_root_package_installed ()) then begin
+             OpamClient.install
+               (OpamSolution.atoms_of_packages
+                  (OpamPackage.Set.singleton root_package))
+               None
+               false;
+             `KO
+           end else begin
+             result
+           end
          in
          n + 2,
          {
