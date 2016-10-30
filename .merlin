@@ -5,4 +5,5 @@ B _build/test/**
 PKG unix
 PKG fileutils
 PKG opam-lib
+PKG uuidm
 FLG -w +a-4-44

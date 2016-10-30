@@ -22,19 +22,24 @@ let rm_r d =
     failwith
       (Printf.sprintf "Command '%s' exited with code %d" cmd exit_code)
 
-let are_all_names_in_both_sets package_set1 package_set2 =
-  OpamPackage.names_of_packages package_set1
-  =
-  OpamPackage.names_of_packages package_set2
-
 type t =
   {
     only_packages: SetString.t option;
     exclude_packages: SetString.t;
     state: OpamState.Types.t;
     universe_depends: OpamTypes.universe;
-    package: OpamPackage.t;
+    root_package: OpamPackage.t;
   }
+
+
+type e =
+  {
+    uuid: string;
+    package: string;
+    result: [`OK|`KO|`DependsKO];
+    output: string option;
+  }
+
 
 let reverse_dependencies t =
   let is_included_in st nv =
@@ -55,28 +60,21 @@ let reverse_dependencies t =
   in
 
   let installable =
-    let open OpamTypes in
-    let u_available =
-      OpamPackage.Set.filter
-        (fun nv ->
-           if is_not_excluded_on_cli nv then begin
-             let opam = OpamState.opam t.state nv in
-             OpamFilter.eval_to_bool
-               ~default:false
-               (OpamState.filter_env ~opam t.state)
-               (OpamFile.OPAM.available opam)
-           end else begin
-             false
-           end)
-        t.universe_depends.u_available
-    in
-    OpamSolver.installable
-      {t.universe_depends with
-       u_packages = u_available;
-       u_available}
+    OpamPackage.Set.filter
+      (fun nv ->
+         if is_not_excluded_on_cli nv then begin
+           let opam = OpamState.opam t.state nv in
+           OpamFilter.eval_to_bool
+             ~default:false
+             (OpamState.filter_env ~opam t.state)
+             (OpamFile.OPAM.available opam)
+         end else begin
+           false
+         end)
+      (OpamSolver.installable t.universe_depends)
   in
 
-  let is_all_depends_installable nv opam =
+  let is_all_depends_installable nv =
     let deps =
       OpamSolver.dependencies
         ~build:true
@@ -118,7 +116,7 @@ let reverse_dependencies t =
       let v = OpamPackage.version nv in
       List.exists (fun (n,_) -> name = n) (OpamFormula.atoms formula) &&
       OpamFormula.eval
-        (fun (n,cstr) ->
+        (fun (n, cstr) ->
            n <> name ||
            OpamFormula.eval
              (fun (relop, vref) -> OpamFormula.eval_relop relop v vref)
@@ -129,15 +127,13 @@ let reverse_dependencies t =
   in
 
   let rev_deps =
-    let pkg_set = OpamPackage.Set.singleton t.package in
+    let pkg_set = OpamPackage.Set.singleton t.root_package in
     OpamPackage.Set.filter
       (fun nv ->
-         (* TODO *)
-(*          OpamGlobals.note "Considering package %s" (OpamPackage.to_string nv); *)
          if is_not_filtered_on_cli nv then begin
            let opam = OpamState.opam t.state nv in
            if is_dependent_on pkg_set opam then
-             is_all_depends_installable nv opam
+             is_all_depends_installable nv
            else
              false
          end else begin
@@ -145,7 +141,6 @@ let reverse_dependencies t =
          end)
       installable
   in
-
   OpamPackage.Set.elements rev_deps
 
 
@@ -158,6 +153,7 @@ let () =
   let only = ref None in
   let exclude = ref SetString.empty in
   let dry_run = ref false in
+  let output = ref "output.bin" in
   let () =
     let open Arg in
     parse
@@ -191,6 +187,10 @@ let () =
            "--dry_run",
            Set dry_run,
            " Don't do anything, just show what should be done.";
+
+           "--output",
+           Set_string output,
+           "fn Results output file.";
          ])
       (fun s -> failwith (Printf.sprintf "Don't know what to do with %S." s))
       "test-opam-build-revdeps build reverse dependencies for a given package."
@@ -210,7 +210,6 @@ let () =
       cp_r opamroot_pristine opamroot;
     end
   in
-
 
   let package_opt, package_atom =
     match !package with
@@ -253,7 +252,7 @@ let () =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
 
-  let package =
+  let root_package =
     match package_opt with
     | `Package p -> p
     | `Name n ->
@@ -263,35 +262,70 @@ let () =
   let rev_deps =
     OpamGlobals.note
       "Computing reverse dependencies for package %s"
-      (OpamPackage.to_string package);
+      (OpamPackage.to_string root_package);
     reverse_dependencies
       {
         only_packages = !only;
         exclude_packages = !exclude;
         state;
         universe_depends;
-        package;
+        root_package;
       }
   in
+  let steps = 2 * (List.length rev_deps) in
   let _, lst =
     List.fold_left
       (fun (n, lst) pkg ->
          let atom = OpamPackage.name pkg, Some (`Eq, OpamPackage.version pkg) in
          let str = OpamPackage.to_string pkg in
-         note "Building package %s (%d/%d)." str n (List.length rev_deps);
-         if !dry_run then begin
-           n + 1, lst
-         end else begin
+         let uuid = Uuidm.to_string (Uuidm.v `V4) in
+         let deps_uuid, build_uuid = "deps:"^uuid, "build:"^uuid in
+         let result =
            try
-             OpamClient.install [atom] None false;
-             n + 1, (str, `OK) :: lst
+             note "Building dependencies of package %s (%d/%d)." str n steps;
+             if not !dry_run then begin
+               Printf.printf "start %s\n%!" deps_uuid;
+               OpamClient.install [atom] None true;
+               Printf.printf "end %s\n%!" deps_uuid;
+             end;
+             `OK
            with _ ->
-             n + 1, (str, `KO) :: lst
-         end)
+             `DependsKO
+         in
+         let result =
+           if result = `OK then
+             try
+               note "Building package %s (%d/%d)." str (n + 1) steps;
+               if not !dry_run then begin
+                 Printf.printf "start %s\n%!" build_uuid;
+                 OpamClient.install [atom] None false;
+                 Printf.printf "end %s\n%!" build_uuid
+               end;
+               `OK
+             with _ ->
+               `KO
+           else
+             result
+         in
+         n + 2,
+         {
+           uuid;
+           package = OpamPackage.to_string pkg;
+           result;
+           output = None
+         } :: lst)
       (1, []) rev_deps
   in
+  let chn = open_out_bin !output in
+  Marshal.to_channel chn lst [];
+  close_out chn;
   List.iter
-    (function
-      | s, `OK -> note "OK %s" s
-      | s, `KO -> note "KO %s" s)
+    (fun e ->
+       let pre =
+         match e.result with
+         | `OK -> "OK"
+         | `KO -> "KO"
+         | `DependsKO -> "DependsKO"
+       in
+       note "%s %s" pre e.package)
     lst

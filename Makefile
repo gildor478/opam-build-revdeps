@@ -1,13 +1,5 @@
 
-ARGS=
-ARGS+=--dry_run
-ARGS+=--only zipperposition
-ARGS+=--only bistro
-ARGS+=--only bap-warn-used
-
-default: build
-	./OPAMBuildRevdeps.native --package oasis \
-		--exclude bap-std $(ARGS)
+default: self-test
 
 # OASIS_START
 # DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
@@ -50,3 +42,15 @@ configure:
 .PHONY: build doc test all install uninstall reinstall clean distclean configure
 
 # OASIS_STOP
+
+SELF_TEST_ARGS=
+SELF_TEST_ARGS+=--dry_run
+SELF_TEST_ARGS+=--only zipperposition
+SELF_TEST_ARGS+=--only bistro
+SELF_TEST_ARGS+=--only bap-warn-used
+
+self-test: build
+	./OPAMBuildRevdeps.native --package oasis \
+		--exclude bap-std $(ARGS) 2>&1 | tee logs.txt
+
+.PHONY: self-test
