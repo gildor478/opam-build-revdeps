@@ -45,10 +45,11 @@ configure:
 
 SELF_TEST_ARGS=
 #SELF_TEST_ARGS+=--dry_run
-SELF_TEST_ARGS+=--only zipperposition
-SELF_TEST_ARGS+=--only bistro
-SELF_TEST_ARGS+=--only bap-warn-used
-SELF_TEST_ARGS+=--only maildir
+#SELF_TEST_ARGS+=--only zipperposition
+#SELF_TEST_ARGS+=--only bistro
+#SELF_TEST_ARGS+=--only bap-warn-used
+#SELF_TEST_ARGS+=--only maildir
+#SELF_TEST_ARGS+=--only expect
 
 self-test: build
 	./OPAMBuildRevdeps.native --package oasis \

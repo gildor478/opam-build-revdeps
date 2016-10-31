@@ -6,4 +6,5 @@ PKG unix
 PKG fileutils
 PKG opam-lib
 PKG uuidm
+PKG calendar
 FLG -w +a-4-44

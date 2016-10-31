@@ -1,9 +1,12 @@
 
+open CalendarLib
+
 module OpamClient = OpamClient.SafeAPI
 
 module SetString = Set.Make(String)
 
 let note = OpamGlobals.note
+
 
 (* TODO: fileutils >= 0.5.0 *)
 let cp_r d1 d2 =
@@ -36,10 +39,15 @@ type e =
   {
     uuid: string;
     package: string;
-    result: [`OK|`KO|`DependsKO];
-    output: string option;
+    result: [`OK|`KO|`DependsKO|`RootPackageKO];
+    output_deps: string option;
+    time_deps_seconds: int;
+    output_build: string option;
+    time_build_seconds: int;
   }
 
+
+let atom_eq nv = OpamPackage.name nv, Some (`Eq, OpamPackage.version nv)
 
 let reverse_dependencies t =
   let is_included_in st nv =
@@ -100,7 +108,10 @@ let reverse_dependencies t =
         ~orphans:OpamPackage.Set.empty
         {
           wish_install =
-            OpamSolution.atoms_of_packages (OpamPackage.Set.singleton nv);
+            [
+              atom_eq nv;
+              atom_eq t.root_package;
+            ];
           wish_remove = [];
           wish_upgrade = [];
           criteria = `Default;
@@ -143,9 +154,9 @@ let reverse_dependencies t =
                is_installable nv
              in
              if installable then
-               OpamGlobals.note "Package %s is  not installable." nv_str
+               OpamGlobals.note "Package %s will be built." nv_str
              else
-               OpamGlobals.note "Package %s will be built." nv_str;
+               OpamGlobals.note "Package %s is not installable." nv_str;
              installable
            end else
              false
@@ -308,49 +319,52 @@ let () =
     OpamPackage.Set.mem root_package universe_depends.OpamTypes.u_installed
   in
 
+  let install uuid atoms deps success failure =
+    let tm = Time.now () in
+    let res =
+      try
+        if not !dry_run then begin
+          Printf.printf "start %s\n%!" uuid;
+          OpamClient.install atoms None deps;
+          Printf.printf "end %s\n%!" uuid;
+        end;
+        success
+      with _ ->
+        failure
+    in
+    res, Time.Period.to_seconds (Time.sub tm (Time.now ()))
+  in
+
   let steps = 2 * (List.length rev_deps) in
   let _, lst =
     List.fold_left
       (fun (n, lst) pkg ->
-         let atom = OpamPackage.name pkg, Some (`Eq, OpamPackage.version pkg) in
+         let atoms = [atom_eq pkg; atom_eq root_package] in
          let str = OpamPackage.to_string pkg in
          let uuid = Uuidm.to_string (Uuidm.v `V4) in
          let deps_uuid, build_uuid = "deps:"^uuid, "build:"^uuid in
-         let result =
-           try
-             note "Building dependencies of package %s (%d/%d)." str n steps;
-             if not !dry_run then begin
-               Printf.printf "start %s\n%!" deps_uuid;
-               OpamClient.install [atom] None true;
-               Printf.printf "end %s\n%!" deps_uuid;
-             end;
-             `OK
-           with _ ->
-             `DependsKO
+         let result, time_deps_seconds =
+           note "Building dependencies of package %s (%d/%d)." str n steps;
+           install deps_uuid atoms true `OK `DependsKO
+         in
+         let result, time_build_seconds =
+           if result = `OK then begin
+             note "Building package %s (%d/%d)." str (n + 1) steps;
+             install build_uuid atoms false `OK `KO
+           end else begin
+             result, 0
+           end
          in
          let result =
-           if result = `OK then
-             try
-               note "Building package %s (%d/%d)." str (n + 1) steps;
-               if not !dry_run then begin
-                 Printf.printf "start %s\n%!" build_uuid;
-                 OpamClient.install [atom] None false;
-                 Printf.printf "end %s\n%!" build_uuid
-               end;
-               `OK
-             with _ ->
-               `KO
-           else
-             result
-         in
-         let result =
-           if result = `OK && not (has_root_package_installed ()) then begin
-             OpamClient.install
-               (OpamSolution.atoms_of_packages
-                  (OpamPackage.Set.singleton root_package))
-               None
-               false;
-             `KO
+           if not (has_root_package_installed ()) then begin
+             OpamGlobals.note
+               "Requesting install of root package %s."
+               (OpamPackage.to_string root_package);
+             OpamClient.install [atom_eq root_package] None false;
+             if result = `OK then
+               `RootPackageKO
+             else
+               result
            end else begin
              result
            end
@@ -360,7 +374,10 @@ let () =
            uuid;
            package = OpamPackage.to_string pkg;
            result;
-           output = None
+           output_deps = None;
+           time_deps_seconds;
+           output_build = None;
+           time_build_seconds;
          } :: lst)
       (1, []) rev_deps
   in
@@ -374,6 +391,7 @@ let () =
          | `OK -> "OK"
          | `KO -> "KO"
          | `DependsKO -> "DependsKO"
+         | `RootPackageKO -> "RootPackageKO"
        in
        note "%s %s" pre e.package)
     lst
