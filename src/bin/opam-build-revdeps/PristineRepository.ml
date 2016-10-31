@@ -1,4 +1,4 @@
-module OpamClient = OpamClient.SafeAPI
+open Utils
 
 type t =
   {

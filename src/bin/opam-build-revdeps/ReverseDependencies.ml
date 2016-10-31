@@ -1,7 +1,4 @@
-let atom_eq nv = OpamPackage.name nv, Some (`Eq, OpamPackage.version nv)
-
-module OpamClient = OpamClient.SafeAPI
-module SetString = Set.Make(String)
+open Utils
 
 type t =
   {
@@ -14,6 +11,12 @@ type t =
 
 
 let reverse_dependencies t =
+  let () =
+    OpamGlobals.note
+      "Excluded packages: %s."
+      (String.concat ", " (SetString.elements t.excluded_packages))
+  in
+
   let is_included_in st nv =
     let n_str = OpamPackage.Name.to_string (OpamPackage.name nv) in
     let nv_str = OpamPackage.to_string nv in
