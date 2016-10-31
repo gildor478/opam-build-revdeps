@@ -66,21 +66,21 @@ let () =
   in
   let opamroot = Filename.concat !root_dir "opam" in
 
-  let package_opt, package_atom =
+  let package_opt =
     match !package with
     | Some s ->
       begin
         match OpamPackage.of_string_opt s with
         | Some p ->
-          `Package p, (OpamPackage.name p, Some (`Eq, OpamPackage.version p))
+          `Package p
         | None ->
           let n = OpamPackage.Name.of_string s in
-          `Name n, (n, None)
+          `Name n
       end
     | None -> failwith "You need to specify a package with --package."
   in
 
-  let pristine_repository = 
+  let pristine_repository =
     {
       PristineRepository.
       opamroot_pristine = Filename.concat !root_dir "opam.pristine";
@@ -101,25 +101,14 @@ let () =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
 
-  let root_package, excluded_packages =
+  let root_package =
     let open OpamTypes in
-    let nv, all_versions =
-      match package_opt with
-      | `Package p ->
-        p,
-        OpamPackage.packages_of_name
-          universe_depends.u_packages
-          (OpamPackage.name p)
-      | `Name n ->
-        OpamPackage.max_version universe_depends.u_installed n,
-        OpamPackage.packages_of_name universe_depends.u_packages n
-    in
-    nv,
-    OpamPackage.Set.fold
-      (fun nv st -> SetString.add (OpamPackage.to_string nv) st)
-      (OpamPackage.Set.remove nv all_versions)
-      !exclude
+    match package_opt with
+    | `Package nv -> nv
+    | `Name n -> OpamPackage.max_version universe_depends.u_installed n
   in
+
+  let excluded_packages = !exclude in
 
   let rev_deps =
     OpamGlobals.note
