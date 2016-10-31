@@ -1,39 +1,6 @@
 
 open CalendarLib
-
-module OpamClient = OpamClient.SafeAPI
-
-module SetString = Set.Make(String)
-
-let note = OpamGlobals.note
-
-
-(* TODO: fileutils >= 0.5.0 *)
-let cp_r d1 d2 =
-  let cmd = Printf.sprintf "cp -r -p %s %s" d1 d2 in
-  let exit_code = Sys.command cmd in
-  if exit_code <> 0 then
-    failwith
-      (Printf.sprintf "Command '%s' exited with code %d" cmd exit_code)
-
-
-(* TODO: fileutils >= 0.5.0 *)
-let rm_r d =
-  let cmd = Printf.sprintf "rm -rf %s" (Filename.quote d) in
-  let exit_code = Sys.command cmd in
-  if exit_code <> 0 then
-    failwith
-      (Printf.sprintf "Command '%s' exited with code %d" cmd exit_code)
-
-type t =
-  {
-    only_packages: SetString.t option;
-    excluded_packages: SetString.t;
-    state: OpamState.Types.t;
-    universe_depends: OpamTypes.universe;
-    root_package: OpamPackage.t;
-  }
-
+open ReverseDependencies
 
 type e =
   {
@@ -45,128 +12,6 @@ type e =
     output_build: string option;
     time_build_seconds: int;
   }
-
-
-let atom_eq nv = OpamPackage.name nv, Some (`Eq, OpamPackage.version nv)
-
-let reverse_dependencies t =
-  let is_included_in st nv =
-    let n_str = OpamPackage.Name.to_string (OpamPackage.name nv) in
-    let nv_str = OpamPackage.to_string nv in
-    SetString.mem n_str st || SetString.mem nv_str st
-  in
-
-  let is_not_excluded_on_cli nv =
-    not (is_included_in t.excluded_packages nv)
-  in
-
-  let is_not_filtered_on_cli nv =
-    match is_not_excluded_on_cli nv, t.only_packages with
-    | false, _ -> false
-    | true, Some st -> is_included_in st nv
-    | true, None -> true
-  in
-
-  let universe =
-    let u = t.universe_depends in
-    let set_filter = OpamPackage.Set.filter is_not_excluded_on_cli in
-    let map_filter mp =
-      OpamPackage.Map.filter (fun nv _ -> is_not_excluded_on_cli nv) mp
-    in
-    let open OpamTypes in
-    {
-      u_packages = set_filter u.u_packages;
-      u_installed = set_filter u.u_installed;
-      u_available = set_filter u.u_available;
-      u_depends = map_filter u.u_depends;
-      u_depopts = map_filter u.u_depopts;
-      u_conflicts = map_filter u.u_conflicts;
-      u_action = u.u_action;
-      u_installed_roots = set_filter u.u_installed_roots;
-      u_pinned = set_filter u.u_pinned;
-      u_base = set_filter u.u_base;
-    }
-  in
-
-  let installable =
-    OpamPackage.Set.filter
-      (fun nv ->
-         let opam = OpamState.opam t.state nv in
-         OpamFilter.eval_to_bool
-           ~default:false
-           (OpamState.filter_env ~opam t.state)
-           (OpamFile.OPAM.available opam))
-      (OpamSolver.installable universe)
-  in
-
-  let is_installable nv =
-    let open OpamTypes in
-    let result =
-      OpamSolver.resolve
-        ~verbose:true
-        universe
-        ~orphans:OpamPackage.Set.empty
-        {
-          wish_install =
-            [
-              atom_eq nv;
-              atom_eq t.root_package;
-            ];
-          wish_remove = [];
-          wish_upgrade = [];
-          criteria = `Default;
-        }
-    in
-    match result with
-    | Success _ -> true
-    | Conflicts _ -> false
-  in
-
-  let is_dependent_on deps opam =
-    let formula = OpamTypesBase.filter_deps (OpamFile.OPAM.depends opam) in
-    let depends_on nv =
-      let name = OpamPackage.name nv in
-      let v = OpamPackage.version nv in
-      List.exists (fun (n,_) -> name = n) (OpamFormula.atoms formula) &&
-      OpamFormula.eval
-        (fun (n, cstr) ->
-           n <> name ||
-           OpamFormula.eval
-             (fun (relop, vref) -> OpamFormula.eval_relop relop v vref)
-             cstr)
-        formula
-    in
-    OpamPackage.Set.for_all depends_on deps
-  in
-
-  let rev_deps =
-    let pkg_set = OpamPackage.Set.singleton t.root_package in
-    OpamPackage.Set.filter
-      (fun nv ->
-         if is_not_filtered_on_cli nv then begin
-           let opam = OpamState.opam t.state nv in
-           if is_dependent_on pkg_set opam then begin
-             let nv_str = OpamPackage.to_string nv in
-             let installable =
-               OpamGlobals.note
-                 "Considering installability of package %s"
-                 nv_str;
-               is_installable nv
-             in
-             if installable then
-               OpamGlobals.note "Package %s will be built." nv_str
-             else
-               OpamGlobals.note "Package %s is not installable." nv_str;
-             installable
-           end else
-             false
-         end else begin
-           false
-         end)
-      installable
-  in
-  OpamPackage.Set.elements rev_deps
-
 
 let () =
   let ocaml_version = ref "4.03.0" in
@@ -220,20 +65,6 @@ let () =
       "test-opam-build-revdeps build reverse dependencies for a given package."
   in
   let opamroot = Filename.concat !root_dir "opam" in
-  let opamroot_pristine = Filename.concat !root_dir "opam.pristine" in
-  let opamconf = Filename.concat !root_dir "opamrc" in
-
-  let dump_snapshot () =
-    rm_r opamroot_pristine;
-    cp_r opamroot opamroot_pristine
-  in
-  let restore_snapshot () =
-    let open FileUtil in
-    if test Exists opamroot_pristine then begin
-      rm_r opamroot;
-      cp_r opamroot_pristine opamroot;
-    end
-  in
 
   let package_opt, package_atom =
     match !package with
@@ -249,28 +80,22 @@ let () =
     | None -> failwith "You need to specify a package with --package."
   in
 
+  let pristine_repository = 
+    {
+      PristineRepository.
+      opamroot_pristine = Filename.concat !root_dir "opam.pristine";
+      opamconf = Filename.concat !root_dir "opamrc";
+      ocaml_version = !ocaml_version;
+    }
+  in
+
   let () =
     (* Init global variables for OPAM. *)
     OpamGlobals.root_dir := opamroot;
     OpamGlobals.yes := true;
 
     (* Setup environment. *)
-    FileUtil.mkdir ~parent:true opamroot;
-    restore_snapshot ();
-    if not !dry_run then begin
-      if not (OpamFilename.exists (OpamPath.state_cache (OpamPath.root ()))) then
-        OpamClient.init
-          (OpamRepository.default ())
-          (OpamCompiler.of_string !ocaml_version)
-          ~jobs:1
-          `bash
-          (OpamFilename.of_string opamconf)
-          `no;
-      OpamClient.update ~repos_only:false [];
-      OpamClient.upgrade []
-    end;
-    OpamClient.install [package_atom] None false;
-    dump_snapshot ()
+    PristineRepository.init ~dry_run:!dry_run pristine_repository
   in
 
   let state = OpamState.load_state "reverse_dependencies" in
@@ -344,12 +169,13 @@ let () =
          let uuid = Uuidm.to_string (Uuidm.v `V4) in
          let deps_uuid, build_uuid = "deps:"^uuid, "build:"^uuid in
          let result, time_deps_seconds =
-           note "Building dependencies of package %s (%d/%d)." str n steps;
+           OpamGlobals.note
+             "Building dependencies of package %s (%d/%d)." str n steps;
            install deps_uuid atoms true `OK `DependsKO
          in
          let result, time_build_seconds =
            if result = `OK then begin
-             note "Building package %s (%d/%d)." str (n + 1) steps;
+             OpamGlobals.note "Building package %s (%d/%d)." str (n + 1) steps;
              install build_uuid atoms false `OK `KO
            end else begin
              result, 0
@@ -393,5 +219,5 @@ let () =
          | `DependsKO -> "DependsKO"
          | `RootPackageKO -> "RootPackageKO"
        in
-       note "%s %s" pre e.package)
+       OpamGlobals.note "%s %s" pre e.package)
     lst
