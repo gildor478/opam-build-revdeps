@@ -1,0 +1,2 @@
+let name = "${pkg_name}"
+let version = "${pkg_version}"

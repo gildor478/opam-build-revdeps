@@ -11,6 +11,7 @@ Copyrights:     (C) 2016 Sylvain Le Gall
 Homepage:       https://github.com/gildor478/opam-build-revdeps
 Plugins:        DevFiles (0.4), StdFiles (0.4), META (0.4)
 BuildTools:     ocamlbuild
+FilesAB:        src/bin/opam-build-revdeps/Conf.ml.ab
 
 Synopsis: Build reverse dependencies of a package in OPAM.
 
@@ -18,5 +19,5 @@ Executable "opam-build-revdeps"
   Path: src/bin/opam-build-revdeps
   MainIs: OPAMBuildRevdeps.ml
   CompiledObject: best
-  BuildDepends: unix, fileutils, opam-lib.client, uuidm, calendar
+  BuildDepends: unix, fileutils, opam-lib.client, uuidm, calendar, cmdliner
 

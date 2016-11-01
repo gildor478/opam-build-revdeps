@@ -7,4 +7,5 @@ PKG fileutils
 PKG opam-lib
 PKG uuidm
 PKG calendar
+PKG cmdliner
 FLG -w +a-4-44

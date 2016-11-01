@@ -9,6 +9,7 @@ let run ~dry_run ~root_dir ~ocaml_version () =
     }
   in
   (* Init global variables for OPAM. *)
+  FileUtil.mkdir ~parent:true root_dir;
   OpamGlobals.root_dir := Filename.concat root_dir "opam";
   OpamGlobals.yes := true;
   PristineRepository.init ~dry_run pristine_repository;

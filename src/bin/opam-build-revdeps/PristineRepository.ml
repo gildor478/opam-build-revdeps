@@ -34,12 +34,14 @@ let restore t =
 
 let init ~dry_run t =
   let opamroot = !OpamGlobals.root_dir in
+  let is_initialized =
+    OpamFilename.exists (OpamPath.state_cache (OpamPath.root ()))
+  in
 
   restore t;
   (* Setup environment. *)
   if not dry_run then begin
-    let fn = OpamPath.state_cache (OpamPath.root ()) in
-    if not (OpamFilename.exists fn) then
+    if not is_initialized then
       OpamClient.init
         (OpamRepository.default ())
         (OpamCompiler.of_string t.ocaml_version)
@@ -49,6 +51,8 @@ let init ~dry_run t =
         `no;
     OpamClient.update ~repos_only:false [];
     OpamClient.upgrade []
+  end else if not is_initialized then begin
+    failwith "Repository doesn't exists, initialize it first."
   end;
 
   (* Dump a snapshot for future use. *)

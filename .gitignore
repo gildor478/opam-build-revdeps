@@ -8,3 +8,4 @@
 /tmp/
 /logs.txt
 /output.bin
+/src/bin/opam-build-revdeps/Conf.ml

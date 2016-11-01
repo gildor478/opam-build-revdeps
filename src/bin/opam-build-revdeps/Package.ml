@@ -2,12 +2,12 @@ open Utils
 open CalendarLib
 
 let opam_package universe s =
-  let open OpamTypes in
   match OpamPackage.of_string_opt s with
   | Some nv -> nv
   | None ->
     let n = OpamPackage.Name.of_string s in
-    OpamPackage.max_version universe.u_installed n
+    OpamGlobals.note "Looking up for latest version of %s" s;
+    OpamPackage.max_version (OpamSolver.installable universe) n
 
 
 let has_package_installed nv =
@@ -84,9 +84,9 @@ let build_reverse_dependencies ~dry_run ~only_packages ~excluded_packages packag
            end
          in
          let result =
-           if not (has_package_installed root_package) then begin
+           if not dry_run && not (has_package_installed root_package) then begin
              OpamGlobals.note
-               "Requesting install of root package %s."
+               "Requesting reinstall of root package %s."
                (OpamPackage.to_string root_package);
              OpamClient.install [atom_eq root_package] None false;
              if result = `OK then
