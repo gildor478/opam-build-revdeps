@@ -56,10 +56,6 @@ let output_t =
        & opt string "output.bin"
        & info ["output"] ~docv:"FN" ~doc)
 
-let info =
-  let doc = "Build reverse dependencies for a given package." in
-  Term.info Conf.name ~version:Conf.version ~doc
-
 let build_cmd =
   let f
       dry_run
@@ -78,6 +74,7 @@ let build_cmd =
     ~output
     package
   in
+  let doc = "build reverse dependencies." in
   Term.(const f
         $ dry_run_t
         $ root_dir_t
@@ -85,10 +82,30 @@ let build_cmd =
         $ only_t
         $ exclude_t
         $ output_t
-        $ package_t)
+        $ package_t),
+  Term.info "build" ~doc
 
+let init_cmd =
+  let f dry_run root_dir ocaml_version =
+    CommandInit.run ~dry_run ~root_dir ~ocaml_version ()
+  in
+  let doc = "initialize pristine OPAM directories." in
+  Term.(const f $ dry_run_t $ root_dir_t $ ocaml_version_t),
+  Term.info "init" ~doc
+
+
+let default_cmd =
+  let doc = "Compare builds of reverse dependencies for a given package." in
+  Term.(ret (const (fun _ -> `Help (`Pager, None)) $ (const ()))),
+  Term.info Conf.name ~version:Conf.version ~doc
+
+let cmds =
+  [
+    init_cmd;
+    build_cmd;
+  ]
 
 let () =
-  match Term.eval (build_cmd, info) with
+  match Term.eval_choice default_cmd cmds with
   | `Error _ -> exit 1
   | _ -> ()
