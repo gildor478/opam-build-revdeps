@@ -26,6 +26,32 @@ type e =
     time_build_seconds: int;
   }
 
+let deps_uuid e = "deps:"^e.uuid
+let build_uuid e = "build:"^e.uuid
+
+let create nv =
+  {
+    uuid = Uuidm.to_string (Uuidm.v `V4);
+    package = OpamPackage.to_string nv;
+    result = `KO;
+    output_deps = None;
+    time_deps_seconds = -1;
+    output_build = None;
+    time_build_seconds = -1;
+  }
+
+let dump_list fn (lst: e list) =
+  let chn = open_out_bin fn in
+  Marshal.to_channel chn lst [];
+  close_out chn
+
+let load_list fn =
+  let chn = open_in_bin fn in
+  let lst: e list = Marshal.from_channel chn in
+  close_in chn;
+  lst
+
+
 let build_reverse_dependencies ~dry_run ~only_packages ~excluded_packages package =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
@@ -65,22 +91,24 @@ let build_reverse_dependencies ~dry_run ~only_packages ~excluded_packages packag
   let steps = 2 * (List.length rev_deps) in
   let _, results =
     List.fold_left
-      (fun (n, lst) pkg ->
-         let atoms = [atom_eq pkg; atom_eq root_package] in
-         let str = OpamPackage.to_string pkg in
-         let uuid = Uuidm.to_string (Uuidm.v `V4) in
-         let deps_uuid, build_uuid = "deps:"^uuid, "build:"^uuid in
+      (fun (n, lst) nv ->
+         let atoms = [atom_eq nv; atom_eq root_package] in
+         let e = create nv in
          let result, time_deps_seconds =
            OpamGlobals.note
-             "Building dependencies of package %s (%d/%d)." str n steps;
-           install deps_uuid atoms true `OK `DependsKO
+             "Building dependencies of package %s (%d/%d)." e.package n steps;
+           install (deps_uuid e) atoms true `OK `DependsKO
          in
          let result, time_build_seconds =
            if result = `OK then begin
-             OpamGlobals.note "Building package %s (%d/%d)." str (n + 1) steps;
-             install build_uuid atoms false `OK `KO
+             OpamGlobals.note
+               "Building package %s (%d/%d)."
+               e.package
+               (n + 1)
+               steps;
+             install (build_uuid e) atoms false `OK `KO
            end else begin
-             result, 0
+             result, e.time_build_seconds
            end
          in
          let result =
@@ -98,15 +126,7 @@ let build_reverse_dependencies ~dry_run ~only_packages ~excluded_packages packag
            end
          in
          n + 2,
-         {
-           uuid;
-           package = OpamPackage.to_string pkg;
-           result;
-           output_deps = None;
-           time_deps_seconds;
-           output_build = None;
-           time_build_seconds;
-         } :: lst)
+         {e with result; time_deps_seconds; time_build_seconds} :: lst)
       (1, []) rev_deps
   in
   List.iter

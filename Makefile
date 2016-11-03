@@ -52,7 +52,10 @@ SELF_TEST_ARGS+=--only maildir
 SELF_TEST_ARGS+=--only expect
 
 self-test: build
-	./OPAMBuildRevdeps.native build --package oasis \
-		--exclude bap-std $(SELF_TEST_ARGS) 2>&1 | tee logs.txt
+	./OPAMBuildRevdeps.native attach_logs \
+		--log tmp/full-2016-10-30-logs.txt \
+		--result tmp/full-2016-10-30-output.bin
+#	./OPAMBuildRevdeps.native build --package oasis \
+#		--exclude bap-std $(SELF_TEST_ARGS) 2>&1 | tee logs.txt
 
 .PHONY: self-test

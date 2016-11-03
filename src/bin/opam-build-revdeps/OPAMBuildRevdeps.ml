@@ -10,7 +10,7 @@ let ocaml_version_t =
 
 let root_dir_t =
   let doc = "Directory where OPAM roots will be stored." in
-  let default = 
+  let default =
     FilePath.make_filename [FileUtil.pwd (); "_build"; Conf.name]
   in
   Arg.(value
@@ -56,6 +56,14 @@ let output_t =
        & opt string "output.bin"
        & info ["output"] ~docv:"FN" ~doc)
 
+let init_cmd =
+  let f dry_run root_dir ocaml_version =
+    CommandInit.run ~dry_run ~root_dir ~ocaml_version ()
+  in
+  let doc = "initialize pristine OPAM directories." in
+  Term.(const f $ dry_run_t $ root_dir_t $ ocaml_version_t),
+  Term.info "init" ~doc
+
 let build_cmd =
   let f
       dry_run
@@ -85,13 +93,25 @@ let build_cmd =
         $ package_t),
   Term.info "build" ~doc
 
-let init_cmd =
-  let f dry_run root_dir ocaml_version =
-    CommandInit.run ~dry_run ~root_dir ~ocaml_version ()
+let attach_logs_cmd =
+  let f dry_run logs results =
+    CommandAttachLogs.run ~dry_run ~logs ~results ()
   in
-  let doc = "initialize pristine OPAM directories." in
-  Term.(const f $ dry_run_t $ root_dir_t $ ocaml_version_t),
-  Term.info "init" ~doc
+  let logs_t =
+    let doc = "Logs file to attach." in
+    Arg.(value
+         & opt_all file []
+         & info ["log"] ~docv:"FN" ~doc)
+  in
+  let results_t =
+    let doc = "Logs file to attach." in
+    Arg.(value
+         & opt_all file []
+         & info ["result"] ~docv:"FN" ~doc)
+  in
+  let doc = "attach logs to results file." in
+  Term.(const f $ dry_run_t $ logs_t $ results_t),
+  Term.info "attach_logs" ~doc
 
 
 let default_cmd =
@@ -103,6 +123,7 @@ let cmds =
   [
     init_cmd;
     build_cmd;
+    attach_logs_cmd;
   ]
 
 let () =

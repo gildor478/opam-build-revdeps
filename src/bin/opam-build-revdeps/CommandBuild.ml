@@ -14,6 +14,4 @@ let run
         ~excluded_packages
         package
   in
-  let chn = open_out_bin output in
-  Marshal.to_channel chn results [];
-  close_out chn
+  Package.dump_list output results
