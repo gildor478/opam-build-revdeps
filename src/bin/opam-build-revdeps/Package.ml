@@ -15,7 +15,7 @@ let has_package_installed nv =
   let universe_depends = OpamState.universe state OpamTypes.Depends in
   OpamPackage.Set.mem nv universe_depends.OpamTypes.u_installed
 
-type e =
+type t =
   {
     uuid: string;
     package: string;
@@ -34,20 +34,23 @@ let create nv =
     uuid = Uuidm.to_string (Uuidm.v `V4);
     package = OpamPackage.to_string nv;
     result = `KO;
+    (* TODO: be consistent, output_deps -> deps.logs + deps.time, same for
+       build
+     *)
     output_deps = None;
     time_deps_seconds = -1;
     output_build = None;
     time_build_seconds = -1;
   }
 
-let dump_list fn (lst: e list) =
+let dump_list fn (lst: t list) =
   let chn = open_out_bin fn in
   Marshal.to_channel chn lst [];
   close_out chn
 
 let load_list fn =
   let chn = open_in_bin fn in
-  let lst: e list = Marshal.from_channel chn in
+  let lst: t list = Marshal.from_channel chn in
   close_in chn;
   lst
 
@@ -85,7 +88,7 @@ let build_reverse_dependencies ~dry_run ~only_packages ~excluded_packages packag
       with _ ->
         failure
     in
-    res, Time.Period.to_seconds (Time.sub tm (Time.now ()))
+    res, Time.Period.to_seconds (Time.sub (Time.now ()) tm)
   in
 
   let steps = 2 * (List.length rev_deps) in

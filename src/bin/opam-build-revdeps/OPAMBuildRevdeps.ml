@@ -50,12 +50,6 @@ let dry_run_t =
        & flag
        & info ["dry_run"] ~doc)
 
-let output_t =
-  let doc = "Results output file." in
-  Arg.(value
-       & opt string "output.bin"
-       & info ["output"] ~docv:"FN" ~doc)
-
 let init_cmd =
   let f dry_run root_dir ocaml_version =
     CommandInit.run ~dry_run ~root_dir ~ocaml_version ()
@@ -82,6 +76,12 @@ let build_cmd =
     ~output
     package
   in
+  let output_t =
+    let doc = "Results output file." in
+    Arg.(value
+         & opt string "output.bin"
+         & info ["output"] ~docv:"FN" ~doc)
+  in
   let doc = "build reverse dependencies." in
   Term.(const f
         $ dry_run_t
@@ -104,7 +104,7 @@ let attach_logs_cmd =
          & info ["log"] ~docv:"FN" ~doc)
   in
   let results_t =
-    let doc = "Logs file to attach." in
+    let doc = "Result file to attach to." in
     Arg.(value
          & opt_all file []
          & info ["result"] ~docv:"FN" ~doc)
@@ -112,6 +112,32 @@ let attach_logs_cmd =
   let doc = "attach logs to results file." in
   Term.(const f $ dry_run_t $ logs_t $ results_t),
   Term.info "attach_logs" ~doc
+
+let html_cmd =
+  let f dry_run run1_input run2_input output =
+    CommandHTML.run ~dry_run ~run1_input ~run2_input ~output ()
+  in
+  let run1_input_t =
+    let doc = "First run result file to analyse." in
+    Arg.(required
+         & opt (some file) None
+         & info ["run1_input"] ~docv:"FN" ~doc)
+  in
+  let run2_input_t =
+    let doc = "New result file to analyse." in
+    Arg.(required
+         & opt (some file) None
+         & info ["run2_input"] ~docv:"FN" ~doc)
+  in
+  let output_t =
+    let doc = "HTML output file." in
+    Arg.(value
+         & opt string "output.html"
+         & info ["output"] ~docv:"FN" ~doc)
+  in
+  let doc = "generate an HTML summary." in
+  Term.(const f $ dry_run_t $ run1_input_t $ run2_input_t $ output_t),
+  Term.info "html" ~doc
 
 
 let default_cmd =
@@ -124,6 +150,7 @@ let cmds =
     init_cmd;
     build_cmd;
     attach_logs_cmd;
+    html_cmd;
   ]
 
 let () =

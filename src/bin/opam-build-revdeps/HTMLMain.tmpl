@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script>
+function displayFullResult(id) {
+  [].forEach.call(document.getElementsByClassName("container"), function(d) {
+    d.style.display = 'none';
+  });
+  document.getElementById(id).style.display = 'block';
+  document.getElementById(id + ":results").style.display = 'block';
+  document.getElementById(id + ":actions").style.display = 'inline-block';
+  window.location.hash = id;
+}
+
+function hideFullResult(id) {
+  [].forEach.call(document.getElementsByClassName("container"), function(d) {
+    d.style.removeProperty('display');
+  });
+  document.getElementById(id + ":results").style.removeProperty('display');
+  document.getElementById(id + ":actions").style.removeProperty('display');
+  window.location.hash = '';
+}
+
+document.addEventListener("DOMContentLoaded", function(event) {
+  let hash = window.location.hash;
+  if (hash != '' && hash != '#') {
+    console.log("window.location.hash: " + hash.substring(1));
+    displayFullResult(hash.substring(1));
+  }
+});
+    </script>
+    <style type="text/css">
+div.container {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+div.summary {
+  width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  vertical-align: top;
+}
+
+div.summary.ok {
+  background: lightgreen;
+}
+
+div.summary.ko, div.summary.rootpackageko, div.summary.missing {
+  background: lightpink;
+}
+
+div.summary.asbad {
+  background: lightcyan;
+}
+
+div.summary.dependsko {
+  background: lightyellow;
+}
+
+div.results, div.actions {
+  display: none;
+}
+
+div.actions.div {
+  display: inline-block;
+  vertical-align: top;
+}
+
+p.time, p.logs, pre.logs {
+  margin: 0;
+}
+
+p#total_packages, p#is_better, p#count_ok, p#count_as_bad {
+  margin: 0;
+}
+
+p#count_as_bad {
+  margin-bottom: 16px;
+}
+    </style>
+  </head>
+  <body>
+  <h1>Building reverse-dependencies of {{ run1.name }} and
+    {{ run2.name }}</h1>
+  <p id="is_better"><strong>Is Better: {{ is_better }}</strong></p>
+  <p id="total_packages">Total packages: {{ total_packages }}</p>
+  <p id="count_ok">Packages in state "OK": {{ count_ok }}</p>
+  <p id="count_as_bad">Packages in state "AsBad": {{ count_as_bad }}</p>
+{% for item in results %}
+  <div id="{{ item.name }}" class="container">
+    <div class="actions" id="{{ item.name }}:actions">
+      <div onclick="hideFullResult('{{ item.name }}')">&#8592;</div>
+    </div>
+    <div class="summary {{ item.status }}"
+         onclick="displayFullResult('{{ item.name }}')">
+      {%- if item.status == "ok" %}&#x2713;{% endif -%}
+      {%- if item.status == "ko" %}&#x2715;{% endif -%}
+      {%- if item.status == "rootpackageko" %}&#x2715;{% endif -%}
+      {%- if item.status == "dependsko" %}~{% endif -%}
+      {%- if item.status == "missing" %}~{% endif -%}
+      {%- if item.status == "asbad" %}={% endif -%}
+      &nbsp;{{ item.name }}</div>
+    <div class="results" id="{{ item.name }}:results">
+      <h2>Building {{ item.name }} with {{ run1.name }}</h2>
+      <div class="pkg1">
+        {{ result(item.pkg1) }}
+      </div>
+      <h2>Building {{ item.name }} with {{ run2.name }}</h2>
+      <div class="pkg2">
+        {{ result(item.pkg2) }}
+      </div>
+    </div>
+  </div>
+{%- endfor -%}
+  </body>
+</html>
+{% macro result(i) %}
+  <h3>Building dependencies only for {{ item.name }}</h3>
+  <div class="depends">
+    <p class="time">Time to build: {{ i.deps.time }}</p>
+    <p class="logs">Logs:
+    <pre class="logs">
+{{ i.deps.logs }}
+    </pre>
+  </div>
+  <h3>Building {{ item.name }}</h3>
+  <div class="build">
+    <p class="time">Time to build: {{ i.build.time }}</p>
+    <p class="logs">Logs:
+    <pre class="logs">
+{{ i.build.logs }}
+    </pre>
+  </div>
+{% endmacro %}

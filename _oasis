@@ -19,5 +19,6 @@ Executable "opam-build-revdeps"
   Path: src/bin/opam-build-revdeps
   MainIs: OPAMBuildRevdeps.ml
   CompiledObject: best
-  BuildDepends: unix, fileutils, opam-lib.client, uuidm, calendar, cmdliner, re
+  BuildDepends: unix, fileutils, opam-lib.client, uuidm, calendar, cmdliner, re,
+                jingoo
 

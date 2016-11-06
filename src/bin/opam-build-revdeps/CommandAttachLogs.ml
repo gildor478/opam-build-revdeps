@@ -1,5 +1,4 @@
-
-module MapString = Map.Make(String)
+open Utils
 
 let re_uuid =
   let nxdigit n = Re.(repn xdigit n (Some n)) in
