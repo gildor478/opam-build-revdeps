@@ -1,6 +1,3 @@
-open Utils
-open CalendarLib
-
 type t =
   {
     uuid: string;
