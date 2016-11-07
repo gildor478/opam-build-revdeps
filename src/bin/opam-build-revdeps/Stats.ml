@@ -32,7 +32,7 @@ let compare run1 run2 =
       (fun mp pkg1 ->
          MapString.add pkg1.package (Some pkg1, None) mp)
       MapString.empty
-      run1
+      run1.Run.packages
   in
   let mp =
     List.fold_left
@@ -46,7 +46,7 @@ let compare run1 run2 =
          in
          MapString.add pkg2.package v mp)
       mp
-      run2
+      run2.Run.packages
   in
   MapString.map
     (fun (pkg1, pkg2) ->
@@ -58,6 +58,7 @@ let is_better t =
     (fun _ stats ->
        match stats with
        | st, Some _, Some _ -> st = `OK || st = `AsBad
+       | _, Some _, None -> false
        | _ -> true)
     t
 

@@ -8,7 +8,7 @@ function displayFullResult(id) {
     d.style.display = 'none';
   });
   document.getElementById(id).style.display = 'block';
-  document.getElementById(id + ":results").style.display = 'block';
+  document.getElementById(id + ":package").style.display = 'block';
   document.getElementById(id + ":actions").style.display = 'inline-block';
   window.location.hash = id;
 }
@@ -17,7 +17,7 @@ function hideFullResult(id) {
   [].forEach.call(document.getElementsByClassName("container"), function(d) {
     d.style.removeProperty('display');
   });
-  document.getElementById(id + ":results").style.removeProperty('display');
+  document.getElementById(id + ":package").style.removeProperty('display');
   document.getElementById(id + ":actions").style.removeProperty('display');
   window.location.hash = '';
 }
@@ -64,7 +64,7 @@ div.summary.dependsko {
   background: lightyellow;
 }
 
-div.results, div.actions {
+div.package, div.actions {
   display: none;
 }
 
@@ -77,11 +77,11 @@ p.time, p.logs, pre.logs {
   margin: 0;
 }
 
-p#total_packages, p#is_better, p#count_ok, p#count_as_bad {
+p.count, p#is_better {
   margin: 0;
 }
 
-p#count_as_bad {
+p#count_missing {
   margin-bottom: 16px;
 }
     </style>
@@ -89,32 +89,44 @@ p#count_as_bad {
   <body>
   <h1>Building reverse-dependencies of {{ run1.name }} and
     {{ run2.name }}</h1>
-  <p id="is_better"><strong>Is Better: {{ is_better }}</strong></p>
-  <p id="total_packages">Total packages: {{ total_packages }}</p>
-  <p id="count_ok">Packages in state "OK": {{ count_ok }}</p>
-  <p id="count_as_bad">Packages in state "AsBad": {{ count_as_bad }}</p>
-{% for item in results %}
-  <div id="{{ item.name }}" class="container">
-    <div class="actions" id="{{ item.name }}:actions">
-      <div onclick="hideFullResult('{{ item.name }}')">&#8592;</div>
+  <p id="is_better"><strong>Is Better: {{ is_better }}</strong> </p>
+  <p class="count" id="total_packages">Total packages: {{ total_packages }}</p>
+  <p class="count" id="count_ok">Packages in state "OK": {{ count_ok }}</p>
+  <p class="count" id="count_ko">Packages in state "KO": {{ count_ko }}</p>
+  <p class="count" id="count_dependsko">
+    Packages in state "DependsKO": {{ count_dependsko }}
+  </p>
+  <p class="count" id="count_rootpackageko">
+    Packages in state "RootPackageKO": {{ count_rootpackageko }}
+  </p>
+  <p class="count" id="count_asbad">
+    Packages in state "AsBad": {{ count_asbad }}
+  </p>
+  <p class="count" id="count_missing">
+    Packages in state "Missing": {{ count_missing }}
+  </p>
+{% for pkg in packages %}
+  <div id="{{ pkg.name }}" class="container">
+    <div class="actions" id="{{ pkg.name }}:actions">
+      <div onclick="hideFullResult('{{ pkg.name }}')">&#8592;</div>
     </div>
-    <div class="summary {{ item.status }}"
-         onclick="displayFullResult('{{ item.name }}')">
-      {%- if item.status == "ok" %}&#x2713;{% endif -%}
-      {%- if item.status == "ko" %}&#x2715;{% endif -%}
-      {%- if item.status == "rootpackageko" %}&#x2715;{% endif -%}
-      {%- if item.status == "dependsko" %}~{% endif -%}
-      {%- if item.status == "missing" %}~{% endif -%}
-      {%- if item.status == "asbad" %}={% endif -%}
-      &nbsp;{{ item.name }}</div>
-    <div class="results" id="{{ item.name }}:results">
-      <h2>Building {{ item.name }} with {{ run1.name }}</h2>
+    <div class="summary {{ pkg.status }}"
+         onclick="displayFullResult('{{ pkg.name }}')">
+      {%- if pkg.status == "ok" %}&#x2713;{% endif -%}
+      {%- if pkg.status == "ko" %}&#x2715;{% endif -%}
+      {%- if pkg.status == "rootpackageko" %}&#x2715;{% endif -%}
+      {%- if pkg.status == "dependsko" %}~{% endif -%}
+      {%- if pkg.status == "missing" %}~{% endif -%}
+      {%- if pkg.status == "asbad" %}={% endif -%}
+      &nbsp;{{ pkg.name }}</div>
+    <div class="package" id="{{ pkg.name }}:package">
+      <h2>Building {{ pkg.name }} with {{ run1.name }}</h2>
       <div class="pkg1">
-        {{ result(item.pkg1) }}
+        {{ result(pkg.pkg1) }}
       </div>
-      <h2>Building {{ item.name }} with {{ run2.name }}</h2>
+      <h2>Building {{ pkg.name }} with {{ run2.name }}</h2>
       <div class="pkg2">
-        {{ result(item.pkg2) }}
+        {{ result(pkg.pkg2) }}
       </div>
     </div>
   </div>

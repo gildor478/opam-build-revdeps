@@ -94,8 +94,8 @@ let build_cmd =
   Term.info "build" ~doc
 
 let attach_logs_cmd =
-  let f dry_run logs results =
-    CommandAttachLogs.run ~dry_run ~logs ~results ()
+  let f dry_run logs runs =
+    CommandAttachLogs.run ~dry_run ~logs ~runs ()
   in
   let logs_t =
     let doc = "Logs file to attach." in
@@ -103,14 +103,14 @@ let attach_logs_cmd =
          & opt_all file []
          & info ["log"] ~docv:"FN" ~doc)
   in
-  let results_t =
-    let doc = "Result file to attach to." in
+  let runs_t =
+    let doc = "Run result file to attach to." in
     Arg.(value
          & opt_all file []
-         & info ["result"] ~docv:"FN" ~doc)
+         & info ["run"] ~docv:"FN" ~doc)
   in
   let doc = "attach logs to results file." in
-  Term.(const f $ dry_run_t $ logs_t $ results_t),
+  Term.(const f $ dry_run_t $ logs_t $ runs_t),
   Term.info "attach_logs" ~doc
 
 let html_cmd =

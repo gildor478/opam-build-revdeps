@@ -29,12 +29,17 @@ let parse mp fn =
   let cur_buf = Buffer.create 13 in
   let rec flush id_opt =
     match !cur_id, id_opt with 
-    | Some id', _ ->
-      rmp := MapString.add id' (Buffer.contents cur_buf) !rmp;
+    | Some id, None ->
+      rmp := MapString.add id (Buffer.contents cur_buf) !rmp;
       Buffer.clear cur_buf;
-      cur_id := None;
-      flush id_opt
-    | None, Some id -> rmp := MapString.add id "" !rmp
+      cur_id := None
+    | Some id, Some id' when id = id' ->
+      flush None
+    | Some _, Some id' ->
+      flush None;
+      flush (Some id')
+    | None, Some id ->
+      rmp := MapString.add id "" !rmp
     | None, None -> ()
   in
   let finish () =
@@ -62,30 +67,66 @@ let parse mp fn =
   with End_of_file ->
     finish ()
 
-let run ~dry_run ~logs ~results () =
+let run ~dry_run ~logs ~runs () =
   let logs = List.fold_left parse MapString.empty logs in
+  let unattached_logs =
+    ref (SetString.of_list (List.rev_map fst (MapString.bindings logs)))
+  in
+  let report_incomplete run =
+    let open Run in
+    let open Package in
+    let missing_deps, missing_build =
+      List.fold_left
+        (fun (deps_lst, build_lst) e ->
+           (if e.output_deps = None then e.package :: deps_lst else deps_lst),
+           if e.output_build = None then e.package :: build_lst else build_lst)
+        ([], [])
+        run.packages
+    in
+    if missing_deps <> [] then
+      OpamGlobals.note
+        "Missing dependencies logs for the following packages in run %s: %s."
+        run.root_package
+        (String.concat ", " missing_deps);
+    if missing_build <> [] then
+      OpamGlobals.note
+        "Missing build logs for the following packages in run %s: %s."
+        run.root_package
+        (String.concat ", " missing_build)
+  in
   let find_log id dflt =
     try
+      unattached_logs := SetString.remove id !unattached_logs;
       Some (MapString.find id logs)
     with Not_found ->
       dflt
   in
-  let attach_logs_to_result fn =
-    let results = Package.load_list fn in
-    let results' =
+  let attach_logs_to_run run =
+    let packages = run.Run.packages in
+    let packages' =
       List.map
         (fun e ->
            let open Package in
            {e with
             output_deps = find_log (deps_uuid e) e.output_deps;
             output_build = find_log (build_uuid e) e.output_build})
-        results
+        packages
     in
-    if not dry_run && results <> results' then begin
-      Package.dump_list fn results'
-    end
+    {run with Run.packages = packages'}
   in
-  List.iter attach_logs_to_result results
+  List.iter
+    (fun run_fn ->
+       let run = Run.load run_fn in
+       let run' = attach_logs_to_run run in
+       if not dry_run && run <> run' then begin
+         Run.dump run_fn run'
+       end;
+       report_incomplete run')
+    runs;
+  if not (SetString.is_empty !unattached_logs) then
+    OpamGlobals.note
+      "Unattached logs for the following identifiers: %s."
+      (SetString.to_string !unattached_logs)
 
 
 

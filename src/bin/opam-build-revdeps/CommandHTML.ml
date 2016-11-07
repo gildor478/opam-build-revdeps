@@ -46,9 +46,8 @@ let result vopt =
   Thash h
 
 let run ~dry_run ~run1_input ~run2_input ~output () =
-  (* TODO: add a module Run. *)
-  let run1 = Package.load_list run1_input in
-  let run2 = Package.load_list run2_input in
+  let run1 = Run.load run1_input in
+  let run2 = Run.load run2_input in
   let stats = Stats.compare run1 run2 in
   let lst =
     MapString.fold
@@ -68,12 +67,16 @@ let run ~dry_run ~run1_input ~run2_input ~output () =
   let html =
     Jg_template.from_string
       ~models:[
-        "results", Tlist (List.rev lst);
-        "run1", Tobj ["name", Tstr "oasis.0.4.6"];
-        "run2", Tobj ["name", Tstr "oasis.0.4.7"];
+        "packages", Tlist (List.rev lst);
+        "run1", Tobj ["name", Tstr run1.Run.root_package];
+        "run2", Tobj ["name", Tstr run2.Run.root_package];
         "is_better", Tbool (Stats.is_better stats);
         "count_ok", Tint (Stats.count stats `OK);
-        "count_as_bad", Tint (Stats.count stats `AsBad);
+        "count_ko", Tint (Stats.count stats `KO);
+        "count_dependsko", Tint (Stats.count stats `DependsKO);
+        "count_rootpackageko", Tint (Stats.count stats `RootPackageKO);
+        "count_asbad", Tint (Stats.count stats `AsBad);
+        "count_missing", Tint (Stats.count stats `Missing);
         "total_packages", Tint (Stats.total_packages stats);
       ]
       HTMLTemplates.htmlMain_tmpl

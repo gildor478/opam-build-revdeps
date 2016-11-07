@@ -6,6 +6,9 @@ struct
   include Set.Make(String)
 
   let of_list lst = List.fold_left (fun t e -> add e t) empty lst
+
+  let to_string t =
+    "{ "^(String.concat ", " (elements t))^" }"
 end
 
 module MapString = Map.Make(String)

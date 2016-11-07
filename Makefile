@@ -44,22 +44,34 @@ configure:
 # OASIS_STOP
 
 SELF_TEST_ARGS=
-SELF_TEST_ARGS+=--dry_run
 SELF_TEST_ARGS+=--only zipperposition
 SELF_TEST_ARGS+=--only bistro
 SELF_TEST_ARGS+=--only bap-warn-used
 SELF_TEST_ARGS+=--only maildir
 SELF_TEST_ARGS+=--only expect
+SELF_TEST_ARGS+=--exclude bap-std
 
-self-test: build
-	./OPAMBuildRevdeps.native html \
-		--run1_input tmp/full-2016-10-30-output.bin \
-		--run2_input tmp/full-2016-10-30-output.bin \
-		--output tmp/full-2016-10-30-output.html
-#	./OPAMBuildRevdeps.native attach_logs \
-#		--log tmp/full-2016-10-30-logs.txt \
-#		--result tmp/full-2016-10-30-output.bin
-#	./OPAMBuildRevdeps.native build --package oasis \
-#		--exclude bap-std $(SELF_TEST_ARGS) 2>&1 | tee logs.txt
+OUTPUT_PREFIX=tmp/partial-
+OPAM_BUILD_REVDEPS=./OPAMBuildRevdeps.native
+RUN1_PACKAGE=oasis.0.4.6
+RUN2_PACKAGE=oasis.0.4.7
+
+tmp/run1-output.bin: build
+#	$(OPAM_BUILD_REVDEPS) build --package $(RUN1_PACKAGE) \
+#		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run1-logs.txt
+	$(OPAM_BUILD_REVDEPS) attach_logs --log tmp/run1-logs.txt --run $@ \
+		> tmp/run1-attach_logs.txt 2>&1
+
+tmp/run2-output.bin: build
+# 	$(OPAM_BUILD_REVDEPS) build --package $(RUN2_PACKAGE) \
+# 		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run2-logs.txt
+	$(OPAM_BUILD_REVDEPS) attach_logs --log tmp/run2-logs.txt --run $@ \
+		> tmp/run2-attach_logs.txt 2>&1
+
+self-test: tmp/run1-output.bin tmp/run2-output.bin build
+	$(OPAM_BUILD_REVDEPS) html \
+		--run1_input tmp/run1-output.bin \
+		--run2_input tmp/run2-output.bin \
+		--output tmp/output.html
 
 .PHONY: self-test
