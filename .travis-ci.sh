@@ -1,4 +1,4 @@
-OPAM_PKGS="ocamlify fileutils opam-lib uuidm calendar cmdliner re jingoo"
+OPAM_PKGS="ocamlify fileutils opam-lib uuidm calendar cmdliner re jingoo oasis"
 
 export OPAMYES=1
 if [ -f "$HOME/.opam/config" ]; then
