@@ -84,6 +84,21 @@ p.count, p#is_better {
 p#count_missing {
   margin-bottom: 16px;
 }
+
+div.pkg1, div.pkg2 {
+  display: inline-block;
+  width: 49%;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+div.pkg2 {
+  border-left: 3px black solid;
+  padding-left: 10px;
+}
     </style>
   </head>
   <body>
@@ -120,34 +135,24 @@ p#count_missing {
       {%- if pkg.status == "asbad" %}={% endif -%}
       &nbsp;{{ pkg.name }}</div>
     <div class="package" id="{{ pkg.name }}:package">
-      <h2>Building {{ pkg.name }} with {{ run1.name }}</h2>
-      <div class="pkg1">
-        {{ result(pkg.pkg1) }}
-      </div>
+      <h2>Building dependencies of {{ pkg.name }}</h2>
+      {{ result(pkg.pkg1.deps, "pkg1 depends", run1.name) }}
+      {{ result(pkg.pkg2.deps, "pkg2 depends", run2.name) }}
       <h2>Building {{ pkg.name }} with {{ run2.name }}</h2>
-      <div class="pkg2">
-        {{ result(pkg.pkg2) }}
-      </div>
+      {{ result(pkg.pkg1.build, "pkg1 build", run1.name) }}
+      {{ result(pkg.pkg2.build, "pkg2 build", run2.name) }}
     </div>
   </div>
 {%- endfor -%}
   </body>
 </html>
-{% macro result(i) %}
-  <h3>Building dependencies only for {{ item.name }}</h3>
-  <div class="depends">
-    <p class="time">Time to build: {{ i.deps.time }}</p>
+{% macro result(i, class, root_package) %}
+  <div class="{{ class }}">
+    <h3>With {{ root_package }}</h3>
+    <p class="time">Time to build: {{ i.time }}</p>
     <p class="logs">Logs:
     <pre class="logs">
-{{ i.deps.logs }}
-    </pre>
-  </div>
-  <h3>Building {{ item.name }}</h3>
-  <div class="build">
-    <p class="time">Time to build: {{ i.build.time }}</p>
-    <p class="logs">Logs:
-    <pre class="logs">
-{{ i.build.logs }}
+{{ i.logs }}
     </pre>
   </div>
 {% endmacro %}
