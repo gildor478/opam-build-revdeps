@@ -57,14 +57,14 @@ RUN1_PACKAGE=oasis.0.4.6
 RUN2_PACKAGE=oasis.0.4.7
 
 tmp/run1-output.bin: build
-#	$(OPAM_BUILD_REVDEPS) build --package $(RUN1_PACKAGE) \
-#		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run1-logs.txt
+	$(OPAM_BUILD_REVDEPS) build --package $(RUN1_PACKAGE) \
+		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run1-logs.txt
 	$(OPAM_BUILD_REVDEPS) attach_logs --log tmp/run1-logs.txt --run $@ \
 		> tmp/run1-attach_logs.txt 2>&1
 
 tmp/run2-output.bin: build
-#	$(OPAM_BUILD_REVDEPS) build --package $(RUN2_PACKAGE) \
-#		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run2-logs.txt
+	$(OPAM_BUILD_REVDEPS) build --package $(RUN2_PACKAGE) \
+		--output $@ $(SELF_TEST_ARGS) 2>&1 | tee tmp/run2-logs.txt
 	$(OPAM_BUILD_REVDEPS) attach_logs --log tmp/run2-logs.txt --run $@ \
 		> tmp/run2-attach_logs.txt 2>&1
 

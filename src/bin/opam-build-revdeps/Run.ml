@@ -58,7 +58,7 @@ let build_reverse_dependencies
       }
   in
 
-  let install uuid atoms deps success failure =
+  let install uuid atoms deps step success failure =
     let tm = Time.now () in
     let res =
       try
@@ -71,7 +71,9 @@ let build_reverse_dependencies
       with _ ->
         failure
     in
-    res, Time.Period.to_seconds (Time.sub (Time.now ()) tm)
+    res,
+    {step with
+     Package.time_seconds = Time.Period.to_seconds (Time.sub (Time.now ()) tm)}
   in
 
   let steps = 2 * (List.length rev_deps) in
@@ -81,21 +83,21 @@ let build_reverse_dependencies
          let atoms = [atom_eq nv; atom_eq root_package] in
          let e = Package.create nv in
          let open Package in
-         let result, time_deps_seconds =
+         let result, depends =
            OpamGlobals.note
              "Building dependencies of package %s (%d/%d)." e.package n steps;
-           install (deps_uuid e) atoms true `OK `DependsKO
+           install (deps_uuid e) atoms true e.depends `OK `DependsKO
          in
-         let result, time_build_seconds =
+         let result, build =
            if result = `OK then begin
              OpamGlobals.note
                "Building package %s (%d/%d)."
                e.package
                (n + 1)
                steps;
-             install (build_uuid e) atoms false `OK `KO
+             install (build_uuid e) atoms false e.build `OK `KO
            end else begin
-             result, e.time_build_seconds
+             result, e.build
            end
          in
          let result =
@@ -113,7 +115,7 @@ let build_reverse_dependencies
            end
          in
          n + 2,
-         {e with result; time_deps_seconds; time_build_seconds} :: lst)
+         {e with result; depends; build} :: lst)
       (1, []) rev_deps
   in
   List.iter

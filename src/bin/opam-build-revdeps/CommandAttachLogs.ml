@@ -75,19 +75,22 @@ let run ~dry_run ~logs ~runs () =
   let report_incomplete run =
     let open Run in
     let open Package in
-    let missing_deps, missing_build =
+    let missing_depends, missing_build =
       List.fold_left
-        (fun (deps_lst, build_lst) e ->
-           (if e.output_deps = None then e.package :: deps_lst else deps_lst),
-           if e.output_build = None then e.package :: build_lst else build_lst)
+        (fun (depends_lst, build_lst) e ->
+           (if e.depends.logs = None then
+              e.package :: depends_lst
+            else
+              depends_lst),
+           if e.build.logs = None then e.package :: build_lst else build_lst)
         ([], [])
         run.packages
     in
-    if missing_deps <> [] then
+    if missing_depends <> [] then
       OpamGlobals.note
         "Missing dependencies logs for the following packages in run %s: %s."
         run.root_package
-        (String.concat ", " missing_deps);
+        (String.concat ", " missing_depends);
     if missing_build <> [] then
       OpamGlobals.note
         "Missing build logs for the following packages in run %s: %s."
@@ -97,7 +100,7 @@ let run ~dry_run ~logs ~runs () =
   let find_log id dflt =
     try
       unattached_logs := SetString.remove id !unattached_logs;
-      Some (MapString.find id logs)
+      {dflt with Package.logs = Some (MapString.find id logs)}
     with Not_found ->
       dflt
   in
@@ -108,8 +111,8 @@ let run ~dry_run ~logs ~runs () =
         (fun e ->
            let open Package in
            {e with
-            output_deps = find_log (deps_uuid e) e.output_deps;
-            output_build = find_log (build_uuid e) e.output_build})
+            depends = find_log (deps_uuid e) e.depends;
+            build = find_log (build_uuid e) e.build})
         packages
     in
     {run with Run.packages = packages'}

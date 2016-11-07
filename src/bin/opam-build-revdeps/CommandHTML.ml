@@ -16,29 +16,27 @@ let result vopt =
       "N/A"
     end
   in
-  let step time logs =
+  let step sopt =
     let h = Hashtbl.create 2 in
     let opt f t =
-      let v =
-        match t with
-        | Some e -> f e
-        | None -> "N/A"
-      in
-      Tstr v
+      match t with
+      | Some e -> f e
+      | None -> "N/A"
     in
-    Hashtbl.add h "time" (opt string_of_time time);
-    Hashtbl.add h "logs" (opt String.trim logs);
+    Hashtbl.add h
+      "time"
+      (Tstr (opt (fun s -> string_of_time s.time_seconds) sopt));
+    Hashtbl.add h "logs" (Tstr (opt (fun s -> opt String.trim s.logs) sopt));
     Thash h
   in
   let deps, build =
     match vopt with
     | None ->
-      step None None, step None None
+      step None, step None
     | Some e when e.result = `DependsKO  ->
-      step (Some e.time_deps_seconds) e.output_deps, step None None
+      step (Some e.depends), step None
     | Some e ->
-      step (Some e.time_deps_seconds) e.output_deps,
-      step (Some e.time_build_seconds) e.output_build
+      step (Some e.depends), step (Some e.build)
   in
   let h = Hashtbl.create 2 in
   Hashtbl.add h "deps" deps;
