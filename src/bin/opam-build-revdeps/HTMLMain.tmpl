@@ -120,7 +120,7 @@ div.pkg2 {
   <p class="count" id="count_missing">
     Packages in state "Missing": {{ count_missing }}
   </p>
-{% for pkg in packages %}
+{%- for pkg in packages -%}
   <div id="{{ pkg.name }}" class="container">
     <div class="actions" id="{{ pkg.name }}:actions">
       <div onclick="hideFullResult('{{ pkg.name }}')">&#8592;</div>
@@ -146,13 +146,13 @@ div.pkg2 {
 {%- endfor -%}
   </body>
 </html>
-{% macro result(i, class, root_package) %}
-  <div class="{{ class }}">
-    <h3>With {{ root_package }}</h3>
-    <p class="time">Time to build: {{ i.time }}</p>
-    <p class="logs">Logs:
-    <pre class="logs">
+{%- macro result(i, class, root_package) -%}
+        <div class="{{ class }}">
+          <h3>With {{ root_package }}</h3>
+          <p class="time">Time to build: {{ i.time }}</p>
+          <p class="logs">Logs:
+          <pre class="logs">
 {{ i.logs }}
-    </pre>
-  </div>
-{% endmacro %}
+          </pre>
+        </div>
+{%- endmacro -%}

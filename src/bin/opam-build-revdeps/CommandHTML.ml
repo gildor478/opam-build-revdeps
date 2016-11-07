@@ -27,7 +27,7 @@ let result vopt =
       Tstr v
     in
     Hashtbl.add h "time" (opt string_of_time time);
-    Hashtbl.add h "logs" (opt (fun s -> s) logs);
+    Hashtbl.add h "logs" (opt String.trim logs);
     Thash h
   in
   let deps, build =
