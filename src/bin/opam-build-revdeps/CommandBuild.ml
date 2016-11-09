@@ -1,18 +1,20 @@
-let run
-    ~dry_run
-    ~root_dir
-    ~ocaml_version
-    ~only_packages
-    ~excluded_packages
-    ~output
-    package =
+open Utils
+
+type t =
+  {
+    only: SetString.t option;
+    exclude: SetString.t;
+    package: PackageCLI.t;
+  }
+
+let run dry_run init t output =
   let run =
-    CommandInit.run ~dry_run ~root_dir ~ocaml_version ();
+    CommandInit.run dry_run init;
     Run.build_reverse_dependencies
         ~dry_run
-        ~only_packages
-        ~excluded_packages
-        package
+        ~only_packages:t.only
+        ~excluded_packages:t.exclude
+        t.package
   in
   if not dry_run then
     Run.dump output run

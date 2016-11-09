@@ -20,6 +20,7 @@ let load fn =
   close_in chn;
   t
 
+(* TODO: remove *)
 let opam_package universe s =
   match OpamPackage.of_string_opt s with
   | Some nv -> nv
@@ -41,7 +42,7 @@ let build_reverse_dependencies
     package =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
-  let root_package = opam_package universe_depends package in
+  let root_package = PackageCLI.to_opam_package universe_depends package in
 
   let rev_deps =
     OpamGlobals.note
@@ -60,17 +61,21 @@ let build_reverse_dependencies
 
   let install uuid atoms deps step success failure =
     let tm = Time.now () in
+    let start_str = "start "^uuid in
+    let end_str = "end "^uuid in
+    let print_flush s =
+      Printf.printf "%s\n%!" s;
+      Printf.eprintf "%!"
+    in
     let res =
+      print_flush start_str;
       try
-        if not dry_run then begin
-          Printf.printf "start %s\n%!" uuid;
-          OpamClient.install atoms None deps;
-          Printf.printf "end %s\n%!" uuid;
-        end;
+        OpamClient.install atoms None deps;
         success
       with _ ->
         failure
     in
+    print_flush end_str;
     res,
     {step with
      Package.time_seconds = Time.Period.to_seconds (Time.sub (Time.now ()) tm)}
@@ -130,7 +135,7 @@ let build_reverse_dependencies
        OpamGlobals.note "%s %s" pre e.Package.package)
     packages;
   {
-    root_package = package;
+    root_package = OpamPackage.to_string root_package;
     excluded_packages;
     only_packages;
     packages

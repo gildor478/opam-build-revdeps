@@ -10,4 +10,6 @@ PKG calendar
 PKG cmdliner
 PKG jingoo
 PKG ocamlbuild
+PKG threads
 FLG -w +a-4-44
+B +threads

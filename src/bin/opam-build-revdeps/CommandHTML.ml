@@ -43,7 +43,7 @@ let result vopt =
   Hashtbl.add h "build" build;
   Thash h
 
-let run ~dry_run ~run1_input ~run2_input ~output () =
+let run dry_run run1_input run2_input output =
   let run1 = Run.load run1_input in
   let run2 = Run.load run2_input in
   let stats = Stats.compare run1 run2 in

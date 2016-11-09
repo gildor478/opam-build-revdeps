@@ -1,5 +1,5 @@
 
-default: self-test
+default: self-compare
 
 # OASIS_START
 # DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
@@ -74,4 +74,7 @@ self-test: tmp/run1-output.bin tmp/run2-output.bin build
 		--run2_input tmp/run2-output.bin \
 		--output tmp/output.html
 
-.PHONY: self-test
+self-compare: build
+	$(OPAM_BUILD_REVDEPS) compare --package oasis --only brozip
+
+.PHONY: self-test self-compare

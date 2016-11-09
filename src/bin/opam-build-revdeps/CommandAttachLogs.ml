@@ -67,7 +67,7 @@ let parse mp fn =
   with End_of_file ->
     finish ()
 
-let run ~dry_run ~logs ~runs () =
+let run dry_run logs runs =
   let logs = List.fold_left parse MapString.empty logs in
   let unattached_logs =
     ref (SetString.of_list (List.rev_map fst (MapString.bindings logs)))
@@ -112,7 +112,11 @@ let run ~dry_run ~logs ~runs () =
            let open Package in
            {e with
             depends = find_log (deps_uuid e) e.depends;
-            build = find_log (build_uuid e) e.build})
+            build =
+              if e.result <> `DependsKO then
+                find_log (build_uuid e) e.build
+              else
+                e.build})
         packages
     in
     {run with Run.packages = packages'}
