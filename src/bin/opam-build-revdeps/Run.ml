@@ -6,7 +6,7 @@ type t =
     root_package: string;
     excluded_packages: SetString.t;
     only_packages: SetString.t option;
-    packages: Package.t list;
+    packages: PackageBuilt.t list;
   }
 
 let dump fn (t: t) =
@@ -42,7 +42,7 @@ let build_reverse_dependencies
     package =
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
-  let root_package = PackageCLI.to_opam_package universe_depends package in
+  let root_package = Package.to_opam_package universe_depends package in
 
   let rev_deps =
     OpamGlobals.note
@@ -78,7 +78,8 @@ let build_reverse_dependencies
     print_flush end_str;
     res,
     {step with
-     Package.time_seconds = Time.Period.to_seconds (Time.sub (Time.now ()) tm)}
+     PackageBuilt.time_seconds =
+       Time.Period.to_seconds (Time.sub (Time.now ()) tm)}
   in
 
   let steps = 2 * (List.length rev_deps) in
@@ -86,8 +87,8 @@ let build_reverse_dependencies
     List.fold_left
       (fun (n, lst) nv ->
          let atoms = [atom_eq nv; atom_eq root_package] in
-         let e = Package.create nv in
-         let open Package in
+         let e = PackageBuilt.create nv in
+         let open PackageBuilt in
          let result, depends =
            OpamGlobals.note
              "Building dependencies of package %s (%d/%d)." e.package n steps;
@@ -126,13 +127,13 @@ let build_reverse_dependencies
   List.iter
     (fun e ->
        let pre =
-         match e.Package.result with
+         match e.PackageBuilt.result with
          | `OK -> "OK"
          | `KO -> "KO"
          | `DependsKO -> "DependsKO"
          | `RootPackageKO -> "RootPackageKO"
        in
-       OpamGlobals.note "%s %s" pre e.Package.package)
+       OpamGlobals.note "%s %s" pre e.PackageBuilt.package)
     packages;
   {
     root_package = OpamPackage.to_string root_package;

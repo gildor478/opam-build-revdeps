@@ -1,35 +1,23 @@
-(* TODO: rename PackageBuilt *)
-type step =
-  {
-    logs: string option;
-    time_seconds: int;
-  }
+type t = OpamPackage.Name.t * Version.t option
 
-type t =
-  {
-    uuid: string;
-    package: string;
-    result: [`OK|`KO|`DependsKO|`RootPackageKO];
-    depends: step;
-    build: step;
-  }
+let parse str =
+  match OpamPackage.of_string_opt str with
+  | Some nv ->
+    let ver = OpamPackage.Version.to_string (OpamPackage.version nv) in
+    OpamPackage.name nv, Some (Version.parse ver)
+  | None -> OpamPackage.Name.of_string str, None
 
+let to_string (n, vopt) =
+  let nstr = OpamPackage.Name.to_string n in
+  match vopt with
+  | Some v -> nstr^"."^(Version.to_string v)
+  | None -> nstr
 
-let deps_uuid e = "deps:"^e.uuid
-let build_uuid e = "build:"^e.uuid
-
-let create nv =
-  let default_step =
-    {
-      logs= None;
-      time_seconds= -1;
-    }
+let to_opam_package universe (n, vopt) =
+  let v =
+    match vopt with
+    | Some v -> v
+    | None -> Version.default
   in
-  {
-    uuid = Uuidm.to_string (Uuidm.v `V4);
-    package = OpamPackage.to_string nv;
-    result = `KO;
-    depends = default_step;
-    build = default_step;
-  }
+  Version.to_opam_package universe n v
 

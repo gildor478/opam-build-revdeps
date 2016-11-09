@@ -74,7 +74,7 @@ let run dry_run logs runs =
   in
   let report_incomplete run =
     let open Run in
-    let open Package in
+    let open PackageBuilt in
     let missing_depends, missing_build =
       List.fold_left
         (fun (depends_lst, build_lst) e ->
@@ -100,7 +100,7 @@ let run dry_run logs runs =
   let find_log id dflt =
     try
       unattached_logs := SetString.remove id !unattached_logs;
-      {dflt with Package.logs = Some (MapString.find id logs)}
+      {dflt with PackageBuilt.logs = Some (MapString.find id logs)}
     with Not_found ->
       dflt
   in
@@ -109,7 +109,7 @@ let run dry_run logs runs =
     let packages' =
       List.map
         (fun e ->
-           let open Package in
+           let open PackageBuilt in
            {e with
             depends = find_log (deps_uuid e) e.depends;
             build =

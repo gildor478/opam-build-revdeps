@@ -61,7 +61,7 @@ let run dry_run init build run1 run2 logs_output html_output =
     if vopt <> None then
       OpamGlobals.warning
         "The version constraint of root package %s will be replaced."
-        (PackageCLI.to_string package);
+        (Package.to_string package);
     (n, Some run1.version), (n, Some run2.version)
   in
   with_redirect_logs logs_output

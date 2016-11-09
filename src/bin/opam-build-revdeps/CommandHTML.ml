@@ -1,6 +1,6 @@
 open Utils
 open Jg_types
-open Package
+open PackageBuilt
 
 let result vopt =
   let string_of_time d =

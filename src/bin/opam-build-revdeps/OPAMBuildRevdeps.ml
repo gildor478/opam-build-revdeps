@@ -8,9 +8,9 @@ struct
       if s = "" then
         `Error "Impossible to use '' as package name."
       else
-        `Ok (PackageCLI.parse s)
+        `Ok (Package.parse s)
     in
-    let print fmt pkg = Format.fprintf fmt "%s" (PackageCLI.to_string pkg) in
+    let print fmt pkg = Format.fprintf fmt "%s" (Package.to_string pkg) in
     parse, print
 
   let version =

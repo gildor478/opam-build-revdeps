@@ -1,5 +1,5 @@
 open Utils
-open Package
+open PackageBuilt
 
 module Status =
 struct
@@ -15,7 +15,7 @@ struct
     | `Missing -> "missing"
 end
 
-type t = (Status.t * Package.t option * Package.t option) MapString.t
+type t = (Status.t * PackageBuilt.t option * PackageBuilt.t option) MapString.t
 
 let compare run1 run2 =
   let status pkg1 pkg2 =

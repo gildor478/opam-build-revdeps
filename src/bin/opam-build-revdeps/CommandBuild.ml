@@ -4,7 +4,7 @@ type t =
   {
     only: SetString.t option;
     exclude: SetString.t;
-    package: PackageCLI.t;
+    package: Package.t;
   }
 
 let run dry_run init t output =
