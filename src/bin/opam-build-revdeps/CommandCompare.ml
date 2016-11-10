@@ -4,53 +4,39 @@ type e =
     version: Version.t;
   }
 
-let re_carriage_delete = Re.(compile (str "\r\027[K"))
+let re_carriage_delete = Re.(compile (rep1 (str "\r\027[K")))
 
 let with_redirect_logs logs_output f =
   let chn = open_out logs_output in
-  let chn_mutex = Mutex.create () in
-  let redirect print_eol =
-    let in_fd, out_fd = Unix.pipe () in
-    let in_chn = Unix.in_channel_of_descr in_fd in
-    out_fd,
-    Thread.create
-      (fun () ->
-         begin
-           try
-             while true do
-               let ln = input_line in_chn in
-               let ln =
-                 Re.replace ~all:true re_carriage_delete ~f:(fun _ -> "\n") ln
-               in
-               print_eol ln;
-               Mutex.lock chn_mutex;
-               output_string chn ln;
-               output_string chn "\n";
-               flush chn;
-               Mutex.unlock chn_mutex
-             done
-           with End_of_file ->
-             ()
-         end;
-         close_in in_chn)
-      ()
-  in
-  let stdout_fd, thread_stdout = redirect print_endline in
-  let stderr_fd, thread_stderr = redirect prerr_endline in
   let finish () = close_out chn in
+  let in_fd, out_fd = Unix.pipe () in
+  let in_chn = Unix.in_channel_of_descr in_fd in
   try
     let pid = Unix.fork () in
     if pid = 0 then begin
       finish ();
-      Unix.dup2 stdout_fd Unix.stdout;
-      Unix.dup2 stderr_fd Unix.stderr;
+      Unix.dup2 out_fd Unix.stdout;
+      Unix.dup2 out_fd Unix.stderr;
       f ();
       exit 0
     end else begin
-      Unix.close stdout_fd;
-      Unix.close stderr_fd;
-      Thread.join thread_stdout;
-      Thread.join thread_stderr;
+      Unix.close out_fd;
+      begin
+        try
+          while true do
+            let ln = input_line in_chn in
+            let ln =
+              Re.replace ~all:true re_carriage_delete ~f:(fun _ -> "\n") ln
+            in
+            print_endline ln;
+            output_string chn ln;
+            output_string chn "\n";
+            flush chn;
+          done
+        with End_of_file ->
+          ()
+      end;
+      close_in in_chn;
       match snd (Unix.waitpid [] pid) with
       | Unix.WEXITED 0 -> ()
       | Unix.WEXITED n | Unix.WSIGNALED n | Unix.WSTOPPED n ->
