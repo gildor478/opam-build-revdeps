@@ -4,6 +4,8 @@ type e =
     version: Version.t;
   }
 
+let re_carriage_delete = Re.(compile (str "\r\027[K"))
+
 let with_redirect_logs logs_output f =
   let chn = open_out logs_output in
   let chn_mutex = Mutex.create () in
@@ -17,10 +19,14 @@ let with_redirect_logs logs_output f =
            try
              while true do
                let ln = input_line in_chn in
-               print_eol ("[redirect] "^ln);
+               let ln =
+                 Re.replace ~all:true re_carriage_delete ~f:(fun _ -> "\n") ln
+               in
+               print_eol ln;
                Mutex.lock chn_mutex;
                output_string chn ln;
                output_string chn "\n";
+               flush chn;
                Mutex.unlock chn_mutex
              done
            with End_of_file ->
