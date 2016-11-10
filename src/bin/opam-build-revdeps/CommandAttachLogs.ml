@@ -82,7 +82,10 @@ let run dry_run logs runs =
               e.package :: depends_lst
             else
               depends_lst),
-           if e.build.logs = None then e.package :: build_lst else build_lst)
+           if e.build.logs = None && e.result <> `DependsKO then
+             e.package :: build_lst
+           else
+             build_lst)
         ([], [])
         run.packages
     in
@@ -112,11 +115,7 @@ let run dry_run logs runs =
            let open PackageBuilt in
            {e with
             depends = find_log (deps_uuid e) e.depends;
-            build =
-              if e.result <> `DependsKO then
-                find_log (build_uuid e) e.build
-              else
-                e.build})
+            build = find_log (build_uuid e) e.build})
         packages
     in
     {run with Run.packages = packages'}

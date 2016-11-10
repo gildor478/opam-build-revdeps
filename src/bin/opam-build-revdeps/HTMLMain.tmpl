@@ -135,6 +135,8 @@ div.pkg2 {
       {%- if pkg.status == "asbad" %}={% endif -%}
       &nbsp;{{ pkg.name }}</div>
     <div class="package" id="{{ pkg.name }}:package">
+      <p>Result with {{ run1.name }}: {{ pkg.pkg1.result }}</p>
+      <p>Result with {{ run2.name }}: {{ pkg.pkg2.result }}</p>
       <h2>Building dependencies of {{ pkg.name }}</h2>
       {{ result(pkg.pkg1.deps, "pkg1 depends", run1.name) }}
       {{ result(pkg.pkg2.deps, "pkg2 depends", run2.name) }}

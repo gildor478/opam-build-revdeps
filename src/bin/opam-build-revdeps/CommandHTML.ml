@@ -29,18 +29,21 @@ let result vopt =
     Hashtbl.add h "logs" (Tstr (opt (fun s -> opt String.trim s.logs) sopt));
     Thash h
   in
-  let deps, build =
+  let deps, build, result =
     match vopt with
     | None ->
-      step None, step None
+      step None, step None, "N/A"
     | Some e when e.result = `DependsKO  ->
-      step (Some e.depends), step None
+      step (Some e.depends), step None, Stats.Status.to_string e.result
     | Some e ->
-      step (Some e.depends), step (Some e.build)
+      step (Some e.depends),
+      step (Some e.build),
+      Stats.Status.to_string e.result
   in
   let h = Hashtbl.create 2 in
   Hashtbl.add h "deps" deps;
   Hashtbl.add h "build" build;
+  Hashtbl.add h "result" (Tstr result);
   Thash h
 
 let run dry_run run1_input run2_input output =
