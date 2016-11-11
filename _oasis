@@ -22,7 +22,7 @@ Executable "opam-build-revdeps"
   BuildDepends: unix,
                 fileutils (>= 0.5.1),
                 opam-lib.client (>= 1.2.2),
-                uuidm,
+                uuidm (>= 0.9.6),
                 calendar,
                 cmdliner,
                 re,
