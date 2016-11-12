@@ -48,7 +48,7 @@ will build 0.4.6 and 0.4.7.
 
 ```
 $> compare --package oasis \
-		--version1 latest \
+    --version1 latest \
     --version2 latest -pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
 ```
 
