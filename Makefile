@@ -1,3 +1,23 @@
+################################################################################
+#  opam-build-revdeps: build reverse dependencies of a package in OPAM.        #
+#                                                                              #
+#  Copyright (C) 2016, Sylvain Le Gall                                         #
+#                                                                              #
+#  This library is free software; you can redistribute it and/or modify it     #
+#  under the terms of the GNU Lesser General Public License as published by    #
+#  the Free Software Foundation; either version 2.1 of the License, or (at     #
+#  your option) any later version, with the OCaml static compilation           #
+#  exception.                                                                  #
+#                                                                              #
+#  This library is distributed in the hope that it will be useful, but         #
+#  WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY  #
+#  or FITNESS FOR A PARTICULAR PURPOSE. See the file COPYING for more          #
+#  details.                                                                    #
+#                                                                              #
+#  You should have received a copy of the GNU Lesser General Public License    #
+#  along with this library; if not, write to the Free Software Foundation,     #
+#  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA               #
+################################################################################
 
 default: self-compare
 
@@ -43,6 +63,10 @@ configure:
 
 # OASIS_STOP
 
+
+# Live tests
+#  Really use the executable.
+
 SELF_TEST_ARGS=
 SELF_TEST_ARGS+=--only zipperposition
 SELF_TEST_ARGS+=--only bistro
@@ -78,3 +102,29 @@ self-compare: build
 	$(OPAM_BUILD_REVDEPS) compare --package oasis
 
 .PHONY: self-test self-compare
+
+# Headache target
+#  Fix license header of file.
+
+# TODO: update headache...
+headache:
+	find ./ \
+	  -name .git -prune -false \
+	  -o -name _build -prune -false \
+	  -o -name dist -prune -false \
+	  -o -name tmp -prune -false \
+	  -o -name '*[^~]' -type f \
+	  | xargs /usr/bin/headache -h _header -c _headache.config
+
+.PHONY: headache
+
+# Deploy target
+#  Deploy/release the software.
+
+deploy: headache
+	mkdir dist || true
+	admin-gallu-deploy --verbose
+	admin-gallu-oasis-increment
+	git commit -am "Update OASIS version."
+
+.PHONY: deploy
