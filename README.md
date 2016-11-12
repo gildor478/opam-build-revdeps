@@ -32,7 +32,7 @@ Public License version 2.1 with OCaml linking exception.
 Typical usage
 -------------
 
-Build the two last version in OPAM:
+### Compare the two last version in OPAM
 
 ```
 $> opam-build-revdeps compare --package oasis
@@ -41,8 +41,10 @@ $> opam-build-revdeps compare --package oasis
 If the version of OASIS in OPAM are 0.4.5, 0.4.6 and 0.4.7. The command above
 will build 0.4.6 and 0.4.7.
 
+[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-0.4.6-0.4.7.html)
 
-Build the last version and last version with a pinning:
+
+## Compare the last version and dev. version
 
 ```
 $> compare --package oasis \
