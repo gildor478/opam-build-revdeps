@@ -31,10 +31,10 @@ Executable "opam-build-revdeps"
                 fileutils (>= 0.5.1),
                 opam-lib.client (>= 1.2.2),
                 uuidm (>= 0.9.6),
-                calendar,
-                cmdliner,
-                re,
-                jingoo
+                calendar (>= 2.03),
+                cmdliner (>= 0.9),
+                re (>= 1.7),
+                jingoo (>= 1.2)
 
 SourceRepository head
   Type: git
