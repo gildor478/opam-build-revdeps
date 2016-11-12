@@ -28,29 +28,13 @@ type t =
     ocaml_version: string;
   }
 
-(* TODO: fileutils >= 0.5.0 *)
-let cp_r d1 d2 =
-  let cmd = Printf.sprintf "cp -r -p %s %s" d1 d2 in
-  let exit_code = Sys.command cmd in
-  if exit_code <> 0 then
-    failwith
-      (Printf.sprintf "Command '%s' exited with code %d" cmd exit_code)
-
-(* TODO: fileutils >= 0.5.0 *)
-let rm_r d =
-  let cmd = Printf.sprintf "rm -rf %s" (Filename.quote d) in
-  let exit_code = Sys.command cmd in
-  if exit_code <> 0 then
-    failwith
-      (Printf.sprintf "Command '%s' exited with code %d" cmd exit_code)
-
 (* Restore snapshots if it exists. *)
 let restore t =
   let open FileUtil in
   let opamroot = !OpamGlobals.root_dir in
   if test Exists t.opamroot_pristine then begin
-    rm_r opamroot;
-    cp_r t.opamroot_pristine opamroot;
+    rm ~recurse:true [opamroot];
+    cp ~recurse:true [t.opamroot_pristine] opamroot;
   end
 
 let init ~dry_run t =
@@ -77,6 +61,6 @@ let init ~dry_run t =
   end;
 
   (* Dump a snapshot for future use. *)
-  rm_r t.opamroot_pristine;
-  cp_r opamroot t.opamroot_pristine
+  FileUtil.rm ~recurse:true [t.opamroot_pristine];
+  FileUtil.cp ~recurse:true [opamroot] t.opamroot_pristine
 

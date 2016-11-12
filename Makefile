@@ -99,7 +99,7 @@ self-test: tmp/run1-output.bin tmp/run2-output.bin build
 		--output tmp/output.html
 
 self-compare: build
-	$(OPAM_BUILD_REVDEPS) compare --package oasis
+	$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition
 
 .PHONY: self-test self-compare
 
