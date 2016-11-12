@@ -12,6 +12,7 @@ Homepage:       https://github.com/gildor478/opam-build-revdeps
 Plugins:        DevFiles (0.4), StdFiles (0.4), META (0.4)
 BuildTools:     ocamlbuild
 FilesAB:        src/bin/opam-build-revdeps/Conf.ml.ab
+AlphaFeatures:  stdfiles_markdown
 
 Synopsis: Build reverse dependencies of a package in OPAM.
 Description:
