@@ -62,5 +62,5 @@ let init ~dry_run t =
 
   (* Dump a snapshot for future use. *)
   FileUtil.rm ~recurse:true [t.opamroot_pristine];
-  FileUtil.cp ~recurse:true [opamroot] t.opamroot_pristine
+  FileUtil.cp ~recurse:true [opamroot] t.opamroot_pristine;
 

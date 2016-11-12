@@ -28,13 +28,14 @@ type t =
     package: Package.t;
   }
 
-let run dry_run init t output =
+let run dry_run init t output pins =
   let run =
     CommandInit.run dry_run init;
     Run.build_reverse_dependencies
         ~dry_run
         ~only_packages:t.only
         ~excluded_packages:t.exclude
+        ~pins:pins
         t.package
   in
   if not dry_run then

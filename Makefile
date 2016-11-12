@@ -99,7 +99,9 @@ self-test: tmp/run1-output.bin tmp/run2-output.bin build
 		--output tmp/output.html
 
 self-compare: build
-	$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition
+	$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition \
+		--version1 latest --version2 latest \
+		--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
 
 .PHONY: self-test self-compare
 

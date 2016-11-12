@@ -60,7 +60,22 @@ let build_reverse_dependencies
     ~dry_run
     ~only_packages
     ~excluded_packages
+    ~pins
     package =
+
+  let () =
+    (* Apply pinning first. *)
+    List.iter
+      (fun (pkg, pin_option) ->
+         match pkg with
+         | n, Some (`OpamPackageVersion v) ->
+           (* TODO: quid of pinning + 2 versions -> does it work ? *)
+           OpamClient.PIN.pin n ~version:v (Some pin_option)
+         | n, _ ->
+           OpamClient.PIN.pin n (Some pin_option))
+      pins
+  in
+
   let state = OpamState.load_state "reverse_dependencies" in
   let universe_depends = OpamState.universe state OpamTypes.Depends in
   let root_package = Package.to_opam_package universe_depends package in

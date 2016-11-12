@@ -23,6 +23,7 @@ type e =
   {
     run_output: string;
     version: Version.t;
+    pins: (Package.t * OpamTypes.pin_option) list;
   }
 
 let re_carriage_delete = Re.(compile (rep1 (str "\r\027[K")))
@@ -83,12 +84,14 @@ let run dry_run init build run1 run2 logs_output html_output =
         dry_run
         init
         {build with CommandBuild.package = package1}
-        run1.run_output;
+        run1.run_output
+        run1.pins;
       CommandBuild.run
         dry_run
         init
         {build with CommandBuild.package = package2}
-        run2.run_output);
+        run2.run_output
+        run2.pins);
   CommandAttachLogs.run
     dry_run
     [logs_output]
