@@ -1,3 +1,24 @@
+(******************************************************************************)
+(* opam-build-revdeps: build reverse dependencies of a package in OPAM.       *)
+(*                                                                            *)
+(* Copyright (C) 2016, Sylvain Le Gall                                        *)
+(*                                                                            *)
+(* This library is free software; you can redistribute it and/or modify it    *)
+(* under the terms of the GNU Lesser General Public License as published by   *)
+(* the Free Software Foundation; either version 2.1 of the License, or (at    *)
+(* your option) any later version, with the OCaml static compilation          *)
+(* exception.                                                                 *)
+(*                                                                            *)
+(* This library is distributed in the hope that it will be useful, but        *)
+(* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY *)
+(* or FITNESS FOR A PARTICULAR PURPOSE. See the file COPYING for more         *)
+(* details.                                                                   *)
+(*                                                                            *)
+(* You should have received a copy of the GNU Lesser General Public License   *)
+(* along with this library; if not, write to the Free Software Foundation,    *)
+(* Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA              *)
+(******************************************************************************)
+
 open Utils
 open Cmdliner
 
@@ -21,6 +42,25 @@ struct
         `Ok (Version.parse s)
     in
     let print fmt pkg = Format.fprintf fmt "%s" (Version.to_string pkg) in
+    parse, print
+
+  let pin =
+    let sep_colon = Re.(compile (char ':')) in
+    let parse s =
+      match Re.split sep_colon s with
+      | s :: tl ->
+        let url =
+          OpamTypesBase.pin_option_of_string ~guess:true (String.concat ":" tl)
+        in
+        let n = Package.parse s in
+        `Ok (n, url)
+      | _ ->
+        `Error (Printf.sprintf "Impossible to use %S as a pin." s)
+    in
+    let print fmt (n, p) =
+      Format.fprintf fmt "%s:%s"
+        (Package.to_string n) (OpamTypesBase.string_of_pin_option p)
+    in
     parse, print
 end
 
@@ -92,6 +132,12 @@ let build_cmd, build_t =
                CommandBuild.({only; exclude; package}))
             $ only_t $ exclude_t $ package_t)
   in
+  let pins_t =
+    let doc = "Pin a specific package (syntax: name:url)." in
+    Arg.(value
+         & opt_all Converter.pin []
+         & info ["pin"] ~docv:"NAME:URL" ~doc)
+  in
   let output_t =
     let doc = "Results output file." in
     Arg.(value
@@ -99,7 +145,13 @@ let build_cmd, build_t =
          & info ["output"] ~docv:"FN" ~doc)
   in
   let doc = "build reverse dependencies." in
-  (Term.(const CommandBuild.run $ dry_run_t $ init_t $ build_t $ output_t),
+  (Term.(const
+           CommandBuild.run
+         $ dry_run_t
+         $ init_t
+         $ build_t
+         $ output_t
+         $ pins_t),
    Term.info "build" ~doc),
   build_t
 
@@ -163,10 +215,18 @@ let compare_cmd =
            & opt Converter.version version_default
            & info ["version"^arg_no] ~docv:"{latest,penultimate,VER}" ~doc)
     in
+    let pins_t =
+      let doc = doc_prefix ^ " run specific package(s) to pin (name:url)." in
+      Arg.(value
+           & opt_all Converter.pin []
+           & info ["pin"^arg_no] ~docv:"NAME:URL" ~doc)
+    in
     Term.(const
-            (fun run_output version -> CommandCompare.({run_output; version}))
+            (fun run_output version pins ->
+               CommandCompare.({run_output; version; pins}))
           $ run_output_t
-          $ version_t)
+          $ version_t
+          $ pins_t)
   in
   let run1_t = mk_args "First" "1" `Penultimate in
   let run2_t = mk_args "Second" "2" `Latest in

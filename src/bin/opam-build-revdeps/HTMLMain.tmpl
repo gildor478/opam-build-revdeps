@@ -1,8 +1,11 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="generator" content="{{ generator }}" />
+    <title>Comparison of {{ run1.name }} and {{ run2.name }}</title>
     <script>
+
 function displayFullResult(id) {
   [].forEach.call(document.getElementsByClassName("container"), function(d) {
     d.style.display = 'none';
@@ -10,24 +13,31 @@ function displayFullResult(id) {
   document.getElementById(id).style.display = 'block';
   document.getElementById(id + ":package").style.display = 'block';
   document.getElementById(id + ":actions").style.display = 'inline-block';
-  window.location.hash = id;
 }
 
-function hideFullResult(id) {
+function hideFullResult() {
   [].forEach.call(document.getElementsByClassName("container"), function(d) {
     d.style.removeProperty('display');
   });
-  document.getElementById(id + ":package").style.removeProperty('display');
-  document.getElementById(id + ":actions").style.removeProperty('display');
-  window.location.hash = '';
+  [].forEach.call(document.getElementsByClassName("package"), function(d) {
+    d.style.removeProperty('display');
+  });
+  [].forEach.call(document.getElementsByClassName("actions"), function(d) {
+    d.style.removeProperty('display');
+  });
+}
+
+function updateState() {
+  let hash = window.location.hash;
+  if (hash == '' || hash == '#') {
+    hideFullResult();
+  } else {
+    displayFullResult(hash.substring(1));
+  }
 }
 
 document.addEventListener("DOMContentLoaded", function(event) {
-  let hash = window.location.hash;
-  if (hash != '' && hash != '#') {
-    console.log("window.location.hash: " + hash.substring(1));
-    displayFullResult(hash.substring(1));
-  }
+  updateState();
 });
     </script>
     <style type="text/css">
@@ -101,7 +111,7 @@ div.pkg2 {
 }
     </style>
   </head>
-  <body>
+  <body onhashchange="updateState()">
   <h1>Building reverse-dependencies of {{ run1.name }} and
     {{ run2.name }}</h1>
   <p id="is_better"><strong>Is Better: {{ is_better }}</strong> </p>
@@ -123,17 +133,16 @@ div.pkg2 {
 {%- for pkg in packages -%}
   <div id="{{ pkg.name }}" class="container">
     <div class="actions" id="{{ pkg.name }}:actions">
-      <div onclick="hideFullResult('{{ pkg.name }}')">&#8592;</div>
+      <a href="#">&#8592;</a>
     </div>
-    <div class="summary {{ pkg.status }}"
-         onclick="displayFullResult('{{ pkg.name }}')">
+    <div class="summary {{ pkg.status }}">
       {%- if pkg.status == "ok" %}&#x2713;{% endif -%}
       {%- if pkg.status == "ko" %}&#x2715;{% endif -%}
       {%- if pkg.status == "rootpackageko" %}&#x2715;{% endif -%}
       {%- if pkg.status == "dependsko" %}~{% endif -%}
       {%- if pkg.status == "missing" %}~{% endif -%}
       {%- if pkg.status == "asbad" %}={% endif -%}
-      &nbsp;{{ pkg.name }}</div>
+      &nbsp;<a href="#{{ pkg.name }}">{{ pkg.name }}</a></div>
     <div class="package" id="{{ pkg.name }}:package">
       <p>Result with {{ run1.name }}: {{ pkg.pkg1.result }}</p>
       <p>Result with {{ run2.name }}: {{ pkg.pkg2.result }}</p>
@@ -146,6 +155,7 @@ div.pkg2 {
     </div>
   </div>
 {%- endfor -%}
+<p><a href="{{ generator_url }}">Generated with {{ generator }}</a></p>
   </body>
 </html>
 {%- macro result(i, class, root_package) -%}

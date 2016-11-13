@@ -1,3 +1,24 @@
+(******************************************************************************)
+(* opam-build-revdeps: build reverse dependencies of a package in OPAM.       *)
+(*                                                                            *)
+(* Copyright (C) 2016, Sylvain Le Gall                                        *)
+(*                                                                            *)
+(* This library is free software; you can redistribute it and/or modify it    *)
+(* under the terms of the GNU Lesser General Public License as published by   *)
+(* the Free Software Foundation; either version 2.1 of the License, or (at    *)
+(* your option) any later version, with the OCaml static compilation          *)
+(* exception.                                                                 *)
+(*                                                                            *)
+(* This library is distributed in the hope that it will be useful, but        *)
+(* WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY *)
+(* or FITNESS FOR A PARTICULAR PURPOSE. See the file COPYING for more         *)
+(* details.                                                                   *)
+(*                                                                            *)
+(* You should have received a copy of the GNU Lesser General Public License   *)
+(* along with this library; if not, write to the Free Software Foundation,    *)
+(* Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA              *)
+(******************************************************************************)
+
 open Utils
 open Jg_types
 open PackageBuilt
@@ -68,6 +89,8 @@ let run dry_run run1_input run2_input output =
   let html =
     Jg_template.from_string
       ~models:[
+        "generator_url", Tstr Conf.homepage;
+        "generator", Tstr (Conf.name ^ " "  ^ Conf.version);
         "packages", Tlist (List.rev lst);
         "run1", Tobj ["name", Tstr run1.Run.root_package];
         "run2", Tobj ["name", Tstr run2.Run.root_package];
