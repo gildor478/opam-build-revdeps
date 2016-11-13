@@ -1,4 +1,4 @@
-. "$(dirname $0)/ci-opam.sh" || exit 1
+. "$(dirname $0)/ci-opam.bash" || exit 1
 opam install oasis2opam oasis
 
 # Merge with current master branch.
