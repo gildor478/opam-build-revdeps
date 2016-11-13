@@ -37,6 +37,7 @@ Executable "opam-build-revdeps"
                 cmdliner (>= 0.9),
                 re (>= 1.7),
                 jingoo (>= 1.2)
+  BuildTools: ocamlify
 
 SourceRepository head
   Type: git
