@@ -9,6 +9,7 @@ Authors:        Sylvain Le Gall
 Maintainers:    Sylvain Le Gall <sylvain@le-gall.net>>
 Copyrights:     (C) 2016 Sylvain Le Gall
 Homepage:       https://github.com/gildor478/opam-build-revdeps
+BugReports:     https://github.com/gildor478/opam-build-revdeps/issues
 Plugins:        DevFiles (0.4), StdFiles (0.4), META (0.4)
 BuildTools:     ocamlbuild
 FilesAB:        src/bin/opam-build-revdeps/Conf.ml.ab
