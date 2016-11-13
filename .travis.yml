@@ -8,6 +8,10 @@ addons:
     - ocaml
     - ocaml-native-compilers
     - opam
+branches:
+  except:
+    - opam/unstable
+    - opam/testing
 
 script: bash -ex src/bin/tools/ci-travis.bash
 env:
