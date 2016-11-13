@@ -1,9 +1,8 @@
-# TODO: reactivate
-# . "$(dirname $0)/ci-opam.sh" || exit 1
-# opam install oasis2opam oasis
+. "$(dirname $0)/ci-opam.sh" || exit 1
+opam install oasis2opam oasis
 
 # Merge with current master branch.
-git checkout master -- _oasis 
+git checkout origin/master -- _oasis 
 git merge master
 VERSION="$(oasis -ignore-plugins query version)-$(date +'%Y-%m-%dT%H:%M:%S%:z')"
 
@@ -13,10 +12,8 @@ sed -i "s/BugReports:/XBugReports:/" _oasis
 sed -i "s/^Version:.*/Version: ${VERSION}/" _oasis
 oasis2opam --local -y
 
-git checkout master -- _oasis
+git checkout origin/master -- _oasis
 
-# TODO: activate
-# # Commit changes.
-# git add opam _oasis_remove.ml opam-build-revdeps.install
-# git commit  -m "Setup OPAM pinning v${VERSION}"
-# git push
+# Commit changes.
+git add opam _oasis_remove.ml opam-build-revdeps.install
+git commit  -m "Setup OPAM pinning v${VERSION}."
