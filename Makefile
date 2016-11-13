@@ -63,6 +63,19 @@ configure:
 
 # OASIS_STOP
 
+# Clean extra files.
+#  Remove extra files.
+
+clean-extra:
+	$(RM) output.html
+	$(RM) run1.bin
+	$(RM) run2.bin
+	$(RM) logs.txt
+
+clean: clean-extra
+distclean: clean-extra
+
+.PHONY: clean-extra
 
 # Live tests
 #  Really use the executable.
