@@ -2,12 +2,13 @@
 opam install oasis2opam oasis
 
 restore_oasis () {
-  git checkout origin/master -- _oasis 
+  git checkout _oasis
 }
 
 # Merge with current master branch.
 restore_oasis
 VERSION="$(oasis -ignore-plugins query version)-$(date +'%Y-%m-%dT%H:%M:%S%:z')"
+NAME="$(oasis -ignore-plugins query name)"
 
 # Generate opam files.
 # TODO: remove when oasis2opam will support BugReports field.
@@ -17,5 +18,5 @@ oasis2opam --local -y
 
 # Commit changes.
 restore_oasis
-git add opam _oasis_remove.ml opam-build-revdeps.install
+git add opam _oasis_remove_.ml "${NAME}.install"
 git commit  -m "Setup OPAM pinning v${VERSION}."
