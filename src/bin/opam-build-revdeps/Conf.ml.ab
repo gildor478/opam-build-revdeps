@@ -21,3 +21,5 @@
 
 let name = "${pkg_name}"
 let version = "${pkg_version}"
+(* TODO: extract that from _oasis. *)
+let homepage = "https://github.com/gildor478/opam-build-revdeps"

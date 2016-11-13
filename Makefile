@@ -99,9 +99,13 @@ self-test: tmp/run1-output.bin tmp/run2-output.bin build
 		--output tmp/output.html
 
 self-compare: build
-	$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition \
-		--version1 latest --version2 latest \
-		--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
+	#$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition \
+	#	--version1 latest --version2 latest \
+	#	--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
+	$(OPAM_BUILD_REVDEPS) html \
+		--run1_input run1.bin \
+		--run2_input run2.bin \
+		--output output.html
 
 .PHONY: self-test self-compare
 
