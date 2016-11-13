@@ -54,3 +54,6 @@ $> compare --package oasis \
 
 This will build the last version in official OPAM repository, pin a new oasis
 repository and built the version from there.
+
+[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-0.4.7-0.4.8~HEAD.html)
+
