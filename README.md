@@ -32,7 +32,7 @@ Public License version 2.1 with OCaml linking exception.
 Typical usage
 -------------
 
-### Compare the two last version in OPAM
+### Compare the last two versions in OPAM
 
 ```
 $> opam-build-revdeps compare --package oasis
