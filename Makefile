@@ -117,7 +117,9 @@ self-compare: build
 	#	--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
 	$(OPAM_BUILD_REVDEPS) html \
 		--run1_input run1.bin \
-		--run2_input run2.bin 
+		--run2_input run2.bin \
+		--html_output tmp/output.html \
+		--css_output tmp/output.css
 
 .PHONY: self-test self-compare
 

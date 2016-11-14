@@ -92,10 +92,16 @@ let run dry_run run1_input run2_input t =
          Thash h :: lst)
       stats []
   in
+  let css_output =
+    let open FilePath in
+    make_relative
+      (dirname (make_absolute (FileUtil.pwd ()) t.html_output))
+      (make_absolute (FileUtil.pwd ()) t.css_output)
+  in
   let html =
     Jg_template.from_string
       ~models:[
-        "css_output", Tstr t.css_output;
+        "css_output", Tstr css_output;
         "generator_url", Tstr Conf.homepage;
         "generator", Tstr (Conf.name ^ " "  ^ Conf.version);
         "packages", Tlist (List.rev lst);
