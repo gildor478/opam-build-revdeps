@@ -23,6 +23,12 @@ open Utils
 open Jg_types
 open PackageBuilt
 
+type t =
+  {
+    html_output: string;
+    css_output: string;
+  }
+
 let result vopt =
   let string_of_time d =
     if d > 0 then begin
@@ -67,7 +73,7 @@ let result vopt =
   Hashtbl.add h "result" (Tstr result);
   Thash h
 
-let run dry_run run1_input run2_input output =
+let run dry_run run1_input run2_input t =
   let run1 = Run.load run1_input in
   let run2 = Run.load run2_input in
   let stats = Stats.compare run1 run2 in
@@ -89,6 +95,7 @@ let run dry_run run1_input run2_input output =
   let html =
     Jg_template.from_string
       ~models:[
+        "css_output", Tstr t.css_output;
         "generator_url", Tstr Conf.homepage;
         "generator", Tstr (Conf.name ^ " "  ^ Conf.version);
         "packages", Tlist (List.rev lst);
@@ -106,8 +113,12 @@ let run dry_run run1_input run2_input output =
       HTMLTemplates.htmlMain_tmpl
   in
   if not dry_run then begin
-    let chn = open_out_bin output in
-    output_string chn html;
-    close_out chn
+    let dump fn str =
+      let chn = open_out_bin fn in
+      output_string chn str;
+      close_out chn
+    in
+    dump t.html_output html;
+    dump t.css_output HTMLTemplates.htmlMain_css
   end
 

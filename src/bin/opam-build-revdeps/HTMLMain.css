@@ -1,0 +1,87 @@
+/* Counts at the beginning of the page. */
+
+p.count {
+  display: inline-block;
+  width: 300px;
+}
+
+p#total_packages.count {
+  display: block;
+}
+
+p.count, p#is_better {
+  margin: 0;
+}
+
+p#count_missing {
+  margin-bottom: 16px;
+}
+
+/* Summary. */
+
+div.summary {
+  width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+  vertical-align: top;
+}
+
+div.summary.ok {
+  background: lightgreen;
+}
+
+div.summary.ko, div.summary.rootpackageko, div.summary.missing {
+  background: lightpink;
+}
+
+div.summary.asbad {
+  background: lightcyan;
+}
+
+div.summary.dependsko {
+  background: lightyellow;
+}
+
+
+/* Results per package. */
+
+div.container {
+  display: none;
+}
+
+div.container:target {
+  display: inline-block;
+}
+
+div.container {
+  padding: 0;
+  margin: 0;
+}
+
+div.actions {
+  display: inline-block;
+  vertical-align: top;
+}
+
+p.package_summary, p.time, p.logs, pre.logs {
+  margin: 0;
+}
+
+div.pkg1, div.pkg2 {
+  display: inline-block;
+  width: 49%;
+  margin: 0;
+  padding: 0;
+  vertical-align: top;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+div.pkg2 {
+  border-left: 3px black solid;
+  padding-left: 10px;
+}

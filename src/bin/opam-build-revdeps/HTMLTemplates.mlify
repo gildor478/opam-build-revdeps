@@ -1,1 +1,2 @@
 VarString htmlMain_tmpl "HTMLMain.tmpl"
+VarString htmlMain_css "HTMLMain.css"

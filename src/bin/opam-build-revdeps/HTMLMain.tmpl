@@ -4,112 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="generator" content="{{ generator }}" />
     <title>Comparison of {{ run1.name }} and {{ run2.name }}</title>
-    <script>
-
-function displayFullResult(id) {
-  [].forEach.call(document.getElementsByClassName("container"), function(d) {
-    d.style.display = 'none';
-  });
-  document.getElementById(id).style.display = 'block';
-  document.getElementById(id + ":package").style.display = 'block';
-  document.getElementById(id + ":actions").style.display = 'inline-block';
-}
-
-function hideFullResult() {
-  [].forEach.call(document.getElementsByClassName("container"), function(d) {
-    d.style.removeProperty('display');
-  });
-  [].forEach.call(document.getElementsByClassName("package"), function(d) {
-    d.style.removeProperty('display');
-  });
-  [].forEach.call(document.getElementsByClassName("actions"), function(d) {
-    d.style.removeProperty('display');
-  });
-}
-
-function updateState() {
-  let hash = window.location.hash;
-  if (hash == '' || hash == '#') {
-    hideFullResult();
-  } else {
-    displayFullResult(hash.substring(1));
-  }
-}
-
-document.addEventListener("DOMContentLoaded", function(event) {
-  updateState();
-});
-    </script>
-    <style type="text/css">
-div.container {
-  display: inline-block;
-  padding: 0;
-  margin: 0;
-}
-
-div.summary {
-  width: 150px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  padding: 0;
-  margin: 0;
-  vertical-align: top;
-}
-
-div.summary.ok {
-  background: lightgreen;
-}
-
-div.summary.ko, div.summary.rootpackageko, div.summary.missing {
-  background: lightpink;
-}
-
-div.summary.asbad {
-  background: lightcyan;
-}
-
-div.summary.dependsko {
-  background: lightyellow;
-}
-
-div.package, div.actions {
-  display: none;
-}
-
-div.actions.div {
-  display: inline-block;
-  vertical-align: top;
-}
-
-p.time, p.logs, pre.logs {
-  margin: 0;
-}
-
-p.count, p#is_better {
-  margin: 0;
-}
-
-p#count_missing {
-  margin-bottom: 16px;
-}
-
-div.pkg1, div.pkg2 {
-  display: inline-block;
-  width: 49%;
-  margin: 0;
-  padding: 0;
-  vertical-align: top;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-div.pkg2 {
-  border-left: 3px black solid;
-  padding-left: 10px;
-}
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ css_output }}" />
   </head>
   <body onhashchange="updateState()">
   <h1>Building reverse-dependencies of {{ run1.name }} and
@@ -131,10 +26,38 @@ div.pkg2 {
     Packages in state "Missing": {{ count_missing }}
   </p>
 {%- for pkg in packages -%}
+  <div id="summary">
+    <h1>Summary</h1>
+    {{ summary(pkg) }}
+  </div>
+{%- endfor -%}
+{%- for pkg in packages -%}
   <div id="{{ pkg.name }}" class="container">
+    <h1>Build results for {{ pkg.name }}</h1>
     <div class="actions" id="{{ pkg.name }}:actions">
-      <a href="#">&#8592;</a>
+      <a href="#">Collapse</a>
     </div>
+    <p class="package_summary">
+      Comparison of {{ run1.name }} and {{ run2.name }}: {{ pkg.status }}
+    </p>
+    <p class="package_summary">
+      Result with {{ run1.name }}: {{ pkg.pkg1.result }}
+    </p>
+    <p class="package_summary">
+      Result with {{ run2.name }}: {{ pkg.pkg2.result }}
+    </p>
+    <h2>Building dependencies of {{ pkg.name }}</h2>
+    {{ result(pkg.pkg1.deps, "pkg1 depends", run1.name) }}
+    {{ result(pkg.pkg2.deps, "pkg2 depends", run2.name) }}
+    <h2>Building {{ pkg.name }} with {{ run2.name }}</h2>
+    {{ result(pkg.pkg1.build, "pkg1 build", run1.name) }}
+    {{ result(pkg.pkg2.build, "pkg2 build", run2.name) }}
+  </div>
+{%- endfor -%}
+<p><a href="{{ generator_url }}">Generated with {{ generator }}</a></p>
+  </body>
+</html>
+{%- macro summary(pkg) -%}
     <div class="summary {{ pkg.status }}">
       {%- if pkg.status == "ok" %}&#x2713;{% endif -%}
       {%- if pkg.status == "ko" %}&#x2715;{% endif -%}
@@ -142,22 +65,9 @@ div.pkg2 {
       {%- if pkg.status == "dependsko" %}~{% endif -%}
       {%- if pkg.status == "missing" %}~{% endif -%}
       {%- if pkg.status == "asbad" %}={% endif -%}
-      &nbsp;<a href="#{{ pkg.name }}">{{ pkg.name }}</a></div>
-    <div class="package" id="{{ pkg.name }}:package">
-      <p>Result with {{ run1.name }}: {{ pkg.pkg1.result }}</p>
-      <p>Result with {{ run2.name }}: {{ pkg.pkg2.result }}</p>
-      <h2>Building dependencies of {{ pkg.name }}</h2>
-      {{ result(pkg.pkg1.deps, "pkg1 depends", run1.name) }}
-      {{ result(pkg.pkg2.deps, "pkg2 depends", run2.name) }}
-      <h2>Building {{ pkg.name }} with {{ run2.name }}</h2>
-      {{ result(pkg.pkg1.build, "pkg1 build", run1.name) }}
-      {{ result(pkg.pkg2.build, "pkg2 build", run2.name) }}
+      &nbsp;<a href="#{{ pkg.name }}">{{ pkg.name }}</a>
     </div>
-  </div>
-{%- endfor -%}
-<p><a href="{{ generator_url }}">Generated with {{ generator }}</a></p>
-  </body>
-</html>
+{%- endmacro -%}
 {%- macro result(i, class, root_package) -%}
         <div class="{{ class }}">
           <h3>With {{ root_package }}</h3>

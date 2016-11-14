@@ -172,7 +172,7 @@ let attach_logs_cmd =
   Term.(const CommandAttachLogs.run $ dry_run_t $ logs_t $ runs_t),
   Term.info "attach_logs" ~doc
 
-let html_cmd =
+let html_cmd, html_t =
   let run1_input_t =
     let doc = "First run result file to analyse." in
     Arg.(required
@@ -185,19 +185,33 @@ let html_cmd =
          & opt (some file) None
          & info ["run2_input"] ~docv:"FN" ~doc)
   in
-  let output_t =
-    let doc = "HTML output file." in
-    Arg.(value
-         & opt string "output.html"
-         & info ["output"] ~docv:"FN" ~doc)
+  let html_t =
+    let html_output_t =
+      let doc = "HTML output file." in
+      Arg.(value
+           & opt string "output.html"
+           & info ["html_output"] ~docv:"FN" ~doc)
+    in
+    let css_output_t =
+      let doc = "CSS output file." in
+      Arg.(value
+           & opt string "output.css"
+           & info ["css_output"] ~docv:"FN" ~doc)
+    in
+    Term.(const
+            (fun css_output html_output ->
+               CommandHTML.({html_output; css_output}))
+          $ css_output_t
+          $ html_output_t)
   in
   let doc = "generate an HTML summary." in
-  Term.(const CommandHTML.run
-        $ dry_run_t
-        $ run1_input_t
-        $ run2_input_t
-        $ output_t),
-  Term.info "html" ~doc
+  (Term.(const CommandHTML.run
+         $ dry_run_t
+         $ run1_input_t
+         $ run2_input_t
+         $ html_t),
+   Term.info "html" ~doc),
+  html_t
 
 let compare_cmd =
   let mk_args doc_prefix arg_no version_default =
@@ -230,12 +244,6 @@ let compare_cmd =
   in
   let run1_t = mk_args "First" "1" `Penultimate in
   let run2_t = mk_args "Second" "2" `Latest in
-  let html_output_t =
-    let doc = "HTML output file." in
-    Arg.(value
-         & opt string "output.html"
-         & info ["html_output"] ~docv:"FN" ~doc)
-  in
   let logs_output_t =
     let doc = "Logs output file." in
     Arg.(value
@@ -243,14 +251,14 @@ let compare_cmd =
          & info ["logs_output"] ~docv:"FN" ~doc)
   in
   let doc = "compare two version of a package." in
-  let f dry_run init build run1 run2 html_output logs_output =
+  let f dry_run init build run1 run2 logs_output html =
     if CommandCompare.run dry_run
         init
         build
         run1
         run2
-        html_output
-        logs_output then
+        logs_output
+        html then
       `Ok ()
     else
       `Error (false, "Second version is not better than first version.")
@@ -263,7 +271,7 @@ let compare_cmd =
            $ run1_t
            $ run2_t
            $ logs_output_t
-           $ html_output_t)),
+           $ html_t)),
   Term.info "compare" ~doc
 
 let default_cmd =

@@ -69,7 +69,7 @@ let with_redirect_logs logs_output f =
     finish ();
     raise e
 
-let run dry_run init build run1 run2 logs_output html_output =
+let run dry_run init build run1 run2 logs_output html =
   let package1, package2 =
     let (n, vopt) as package = build.CommandBuild.package in
     if vopt <> None then
@@ -100,6 +100,6 @@ let run dry_run init build run1 run2 logs_output html_output =
     dry_run
     run1.run_output
     run2.run_output
-    html_output;
+    html;
   Stats.is_better
     (Stats.compare (Run.load run1.run_output) (Run.load run2.run_output))

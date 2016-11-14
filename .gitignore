@@ -11,4 +11,5 @@
 /run1.bin
 /run2.bin
 /output.html
+/output.css
 /src/bin/opam-build-revdeps/Conf.ml
