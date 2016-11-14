@@ -47,7 +47,7 @@ will build 0.4.6 and 0.4.7.
 ## Compare the last version and dev. version
 
 ```
-$> compare --package oasis \
+$> opam-build-revdeps compare --package oasis \
     --version1 latest \
     --version2 latest -pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
 ```
