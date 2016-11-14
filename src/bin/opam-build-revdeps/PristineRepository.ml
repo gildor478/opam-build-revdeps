@@ -53,8 +53,13 @@ let init ~dry_run t =
         ~jobs:1
         `bash
         (OpamFilename.of_string t.opamconf)
-        `no;
-    OpamClient.update ~repos_only:false [];
+        `no
+    else
+      OpamClient.update ~repos_only:false [];
+    OpamClient.SWITCH.switch
+      ~quiet:true
+      ~warning:false
+      (OpamSwitch.of_string t.ocaml_version);
     OpamClient.upgrade []
   end else if not is_initialized then begin
     failwith "Repository doesn't exists, initialize it first."
