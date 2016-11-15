@@ -25,9 +25,9 @@
   <p class="count" id="count_missing">
     Packages in state "Missing": {{ count_missing }}
   </p>
+  <h1>Summary</h1>
 {%- for pkg in packages -%}
   <div id="summary">
-    <h1>Summary</h1>
     {{ summary(pkg) }}
   </div>
 {%- endfor -%}
