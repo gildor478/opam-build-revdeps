@@ -41,7 +41,7 @@ $> opam-build-revdeps compare --package oasis
 If the version of OASIS in OPAM are 0.4.5, 0.4.6 and 0.4.7. The command above
 will build 0.4.6 and 0.4.7.
 
-[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-0.4.6-0.4.7.html)
+[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-last2versions.html)
 
 
 ## Compare the last version and dev. version
@@ -55,7 +55,7 @@ $> opam-build-revdeps compare --package oasis \
 This will build the last version in official OPAM repository, pin a new oasis
 repository and built the version from there.
 
-[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-0.4.7-0.4.8~HEAD.html)
+[HTML Results](https://gildor478.github.io/opam-build-revdeps/oasis-stable-dev-versions.html)
 
 OPAM pin
 --------

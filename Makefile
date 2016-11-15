@@ -68,6 +68,7 @@ configure:
 
 clean-extra:
 	$(RM) output.html
+	$(RM) output.css
 	$(RM) run1.bin
 	$(RM) run2.bin
 	$(RM) logs.txt
