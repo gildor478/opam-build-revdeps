@@ -78,6 +78,12 @@ let run dry_run init build run1 run2 logs_output html =
         (Package.to_string package);
     (n, Some run1.version), (n, Some run2.version)
   in
+  let is_better run1 run2 =
+    let is_better, lst = Stats.is_better (Stats.compare run1 run2) in
+    if lst <> [] then
+      OpamGlobals.error "Problematic packages: %s" (String.concat ", " lst);
+    is_better
+  in
   with_redirect_logs logs_output
     (fun () ->
        CommandBuild.run
@@ -101,5 +107,4 @@ let run dry_run init build run1 run2 logs_output html =
     run1.run_output
     run2.run_output
     html;
-  Stats.is_better
-    (Stats.compare (Run.load run1.run_output) (Run.load run2.run_output))
+  is_better (Run.load run1.run_output) (Run.load run2.run_output)

@@ -98,6 +98,8 @@ let run dry_run run1_input run2_input t =
       (dirname (make_absolute (FileUtil.pwd ()) t.html_output))
       (make_absolute (FileUtil.pwd ()) t.css_output)
   in
+  let is_better, problematic_packages = Stats.is_better stats in
+  let problematic_packages = List.map (fun s -> Tstr s) problematic_packages in
   let html =
     Jg_template.from_string
       ~models:[
@@ -107,7 +109,8 @@ let run dry_run run1_input run2_input t =
         "packages", Tlist (List.rev lst);
         "run1", Tobj ["name", Tstr run1.Run.root_package];
         "run2", Tobj ["name", Tstr run2.Run.root_package];
-        "is_better", Tbool (Stats.is_better stats);
+        "is_better", Tbool is_better;
+        "problematic_packages", Tlist problematic_packages;
         "count_ok", Tint (Stats.count stats `OK);
         "count_ko", Tint (Stats.count stats `KO);
         "count_dependsko", Tint (Stats.count stats `DependsKO);

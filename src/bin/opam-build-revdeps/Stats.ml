@@ -75,13 +75,16 @@ let compare run1 run2 =
     mp
 
 let is_better t =
-  MapString.for_all
-    (fun _ stats ->
-       match stats with
-       | st, Some _, Some _ -> st = `OK || st = `AsBad
-       | _, Some _, None -> false
-       | _ -> true)
-    t
+  let mp =
+    MapString.filter
+      (fun _ stats ->
+         match stats with
+         | st, Some _, Some _ -> st <> `OK && st <> `AsBad
+         | _ -> false)
+      t
+  in
+  let lst = List.map fst (MapString.bindings mp) in
+  (lst = []), lst
 
 let count t st =
   MapString.fold (fun _ (st', _, _) c -> if st = st' then c + 1 else c) t 0

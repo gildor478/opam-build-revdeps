@@ -10,6 +10,15 @@
   <h1>Building reverse-dependencies of {{ run1.name }} and
     {{ run2.name }}</h1>
   <p id="is_better"><strong>Is Better: {{ is_better }}</strong> </p>
+  <p id="problematic_packages">Problematic packages:&#32;
+  {%- if problematic_packages -%}
+    {%- for pkg in problematic_packages -%}
+      {%- if loop.index > 1 %},&#32;{% endif -%}<a href="#{{pkg}}">{{pkg}}</a>
+    {%- endfor -%}
+  {%- else -%}
+    N/A
+  {%- endif -%}
+  </p>
   <p class="count" id="total_packages">Total packages: {{ total_packages }}</p>
   <p class="count" id="count_ok">Packages in state "OK": {{ count_ok }}</p>
   <p class="count" id="count_ko">Packages in state "KO": {{ count_ko }}</p>
@@ -26,11 +35,11 @@
     Packages in state "Missing": {{ count_missing }}
   </p>
   <h1>Summary</h1>
-{%- for pkg in packages -%}
   <div id="summary">
+{%- for pkg in packages -%}
     {{ summary(pkg) }}
-  </div>
 {%- endfor -%}
+  </div>
 {%- for pkg in packages -%}
   <div id="{{ pkg.name }}" class="container">
     <h1>Build results for {{ pkg.name }}</h1>

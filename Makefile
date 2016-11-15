@@ -19,7 +19,7 @@
 #  Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA               #
 ################################################################################
 
-default: self-compare
+default: self-html
 
 # OASIS_START
 # DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
@@ -105,23 +105,36 @@ tmp/run2-output.bin: build
 	$(OPAM_BUILD_REVDEPS) attach_logs --log tmp/run2-logs.txt --run $@ \
 		> tmp/run2-attach_logs.txt 2>&1
 
-self-test: tmp/run1-output.bin tmp/run2-output.bin build
+self-html: build
 	$(OPAM_BUILD_REVDEPS) html \
-		--run1_input tmp/run1-output.bin \
-		--run2_input tmp/run2-output.bin \
-		--output tmp/output.html
-
-self-compare: build
-	#$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition \
-	#	--version1 latest --version2 latest \
-	#	--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
-	$(OPAM_BUILD_REVDEPS) html \
-		--run1_input run1.bin \
-		--run2_input run2.bin \
+		--run1_input tmp/run1.bin \
+		--run2_input tmp/run2.bin \
 		--html_output tmp/output.html \
 		--css_output tmp/output.css
 
-.PHONY: self-test self-compare
+self-compare: build
+	$(OPAM_BUILD_REVDEPS) compare --package oasis --only zipperposition \
+		--version1 latest --version2 latest \
+		--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable'
+
+.PHONY: self-test self-compare self-html
+
+# Update documentation
+#  Run to generate example documentation.
+
+UPDATE_DOC_ARGS=
+update-doc: build
+	-$(OPAM_BUILD_REVDEPS) compare --package oasis $(UPDATE_DOC_ARGS) \
+		--html_output docs/oasis-last2versions.html \
+		--css_output docs/oasis-last2versions.css
+	-$(OPAM_BUILD_REVDEPS) compare --package oasis $(UPDATE_DOC_ARGS) \
+		--version1 latest \
+		--version2 latest \
+		--pin2 'oasis:git://github.com/ocaml/oasis#opam/unstable' \
+		--html_output docs/oasis-stable-dev-versions.html \
+		--css_output docs/oasis-stable-dev-versions.css
+
+.PHONY: update-doc
 
 # Headache target
 #  Fix license header of file.

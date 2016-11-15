@@ -9,7 +9,7 @@ p#total_packages.count {
   display: block;
 }
 
-p.count, p#is_better {
+p.count, p#is_better, p#problematic_packages {
   margin: 0;
 }
 
