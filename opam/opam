@@ -1,6 +1,6 @@
 opam-version: "1.2"
 name: "opam-build-revdeps"
-version: "0.1.1-2017-02-25-42"
+version: "0.1.1-2017-03-04-43"
 maintainer: "Sylvain Le Gall <sylvain@le-gall.net>>"
 authors: [ "Sylvain Le Gall" ]
 license: "LGPL-2.1 with OCaml linking exception"
